@@ -1,0 +1,9 @@
+# Archivos/Directorios a ignorar
+
+
+# Dependencias
+node_modules
+node_modules/
+
+# Variables de entorno
+.env

@@ -1,0 +1,24 @@
+----------------- Apuntes personales  -----------------
+
+--------------- Como crear el proyecto  ---------------
+
+
+1) Creo el package.json, con node init -y
+2) Instalar express
+3) Crear el .gitignore
+4) Crear mi estructura del proyecto
+    proyecto
+        |-------readMe.md
+        |-------.env
+        |-------/node_modules
+        |-------package.json
+        |-------package-lock.json
+        | 
+        |-------src
+        |        |------server.js 
+        |
+
+
+---------------------  Otros   ---------------------
+
+ - Ctrl + shift + A, comentar todo lo seleccionado
