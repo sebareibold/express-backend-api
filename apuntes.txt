@@ -1,24 +1,48 @@
------------------ Apuntes personales  -----------------
+----------------- Apuntes personales -----------------
 
---------------- Como crear el proyecto  ---------------
-
+--------------- Como crear el proyecto ---------------
 
 1) Creo el package.json, con node init -y
 2) Instalar express
 3) Crear el .gitignore
 4) Crear mi estructura del proyecto
-    proyecto
-        |-------readMe.md
-        |-------.env
-        |-------/node_modules
-        |-------package.json
-        |-------package-lock.json
-        | 
-        |-------src
-        |        |------server.js 
-        |
 
+--------------- Estructura del Proyecto ---------------
 
----------------------  Otros   ---------------------
+apirest-practice/
+├── .env
+├── .gitignore
+├── apuntes.txt
+├── index.js
+├── package-lock.json
+├── package.json
+├── node_modules/
+└── src/
+    ├── config/
+    ├── controllers/
+    ├── db/
+    │   ├── carts.json
+    │   └── products.json
+    ├── managers/
+    │   └── ProductsManager.js
+    ├── public/
+    ├── routes/
+    ├── services/
+    └── utils/
+        ├── index.js
+        └── server.js
 
- - Ctrl + shift + A, comentar todo lo seleccionado
+--------------- Explicación de Directorios (src) ---------------
+
+- config/: Archivos de configuración de la aplicación (ej: ajustes de base de datos, puertos, variables de entorno específicas).
+- controllers/: Contiene la lógica para manejar las solicitudes entrantes de los clientes y enviar las respuestas. Actúan como intermediarios.
+- db/: Archivos relacionados con la base de datos o fuentes de datos persistentes (ej: archivos JSON, scripts SQL iniciales).
+- managers/: Encargados de la lógica de negocio o la gestión de datos. A menudo coordinan entre controladores y servicios/db.
+- public/: Archivos estáticos accesibles directamente desde el navegador (ej: HTML, CSS, imágenes, JavaScript del lado del cliente).
+- routes/: Define las rutas URL de la aplicación y mapea las URLs a las funciones controladoras correspondientes.
+- services/: Contiene la lógica de negocio reutilizable o la interacción con servicios externos o fuentes de datos.
+- utils/: Funciones de utilidad o ayudantes generales que se usan en varias partes del proyecto.
+
+--------------------- Otros ---------------------
+
+- Ctrl + shift + A, comentar todo lo seleccionado
