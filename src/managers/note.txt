@@ -1,0 +1,1 @@
+El manager accede directamente a la base de datos (En este caso los .json)

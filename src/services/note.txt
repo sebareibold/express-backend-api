@@ -1,0 +1,1 @@
+Sirve para pedirle informacion al manager, y aqui aplicar reglas de negocio de ser necesario.

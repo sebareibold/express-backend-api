@@ -1,13 +1,60 @@
 const express = require("express");
 const app = express(); //App actua como servidor
 
-//Uses
-app.use(express.json()); //Lo que realize es colocar el body en un objeto {}
+const ProductsManager = require("./managers/ProductsManager")
 
-//Metodos de Peticion HTTP
+
+/*----------------------------- Middlewares ----------------------------- */
+app.use(express.json()); //Recibir datos por body {}
+app.use(express.urlencoded({extended: true})); //Data por From
+
+/*------------------------ Endpoints de Products ------------------------ */
 app.get('/', (req,res)=> {
     res.status(200).json({success: true, message: "Mensaje de good"});
 })
+
+app.get('/:pid', (req,res)=> {
+    res.status(200).json({success: true, message: "Mensaje de good"});
+})
+
+app.post('/:pid', (req,res)=> {
+    res.status(200).json({success: true, message: "Mensaje de good"});
+})
+
+app.put('/:pid', (req,res)=> {
+    res.status(200).json({success: true, message: "Mensaje de good"});
+})
+
+app.delete('/:pid', (req,res)=> {
+    res.status(200).json({success: true, message: "Mensaje de good"});
+})
+
+/*------------------------ Endpoints de Carts ------------------------ */
+
+app.get('/', (req,res)=> {
+    res.status(200).json({success: true, message: "Mensaje de good"});
+})
+
+app.get('/:pid', (req,res)=> {
+    res.status(200).json({success: true, message: "Mensaje de good"});
+})
+
+app.post('/:pid', (req,res)=> {
+    res.status(200).json({success: true, message: "Mensaje de good"});
+})
+
+app.put('/:pid', (req,res)=> {
+    res.status(200).json({success: true, message: "Mensaje de good"});
+})
+
+app.delete('/:pid', (req,res)=> {
+    res.status(200).json({success: true, message: "Mensaje de good"});
+})
+
+/*------------------------ Funciones Auxiliares ------------------------ */
+
+
+
 
 
 module.exports = app

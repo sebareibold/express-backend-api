@@ -1,0 +1,1 @@
+El controler recibe el requert, llama a service, y responde.
