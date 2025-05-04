@@ -5,6 +5,7 @@ class ProductsManager {
   constructor() {
     this.filePath = "";
     this.products = [];
+    this.nextId = 0;
   }
 
   async init() {
@@ -12,6 +13,8 @@ class ProductsManager {
       this.filePath = path.join(__dirname, "..", "db", "products.json");
       const data = await fs.readFile(this.filePath, "utf8");
       this.products = JSON.parse(data);
+      const lastProd = this.products[this.products.length - 1];
+      this.nextId = lastProd ? lastProd.id + 1 : 1;
     } catch (error) {
       console.error("Error al leer el archivo de productos:", error.message);
       this.products = []; // fallback por si el archivo está vacío o no existe
@@ -41,7 +44,8 @@ class ProductsManager {
       )
     ) {
       if (this.products.some((p) => p.code !== code)) {
-        const id = this.products.length + 1;
+        const id = this.nextId;
+        this.nextId++;
         const newProduct = {
           id,
           title,
@@ -53,7 +57,7 @@ class ProductsManager {
         };
         this.products.push(newProduct);
         await this.saveProducts();
-        exito=0;
+        exito = 0;
         console.log("Producto añadido:", newProduct);
       }
     } else {
@@ -62,22 +66,16 @@ class ProductsManager {
     return exito;
   }
 
-  async getProducts() {
+  getProducts() {
     return this.products;
   }
 
-  async getProductById(id) {
+  getProductById(id) {
     const specificProduct = this.products.find((product) => product.id === id);
-    let exito;
+    specificProduct
+      ? console.log("Exito: Producto encontrado")
+      : console.log("Error: Producto no encontrado");
 
-    if (specificProduct) {
-      console.log("Exito: Producto encontrado");
-
-      exito = 1;
-    } else {
-      console.log("Error: Producto no encontrado");
-      exito = 0;
-    }
     return specificProduct;
   }
 
@@ -105,7 +103,7 @@ class ProductsManager {
     if (IndexProduct !== -1) {
       this.products.splice(IndexProduct, 1);
       await this.saveProducts();
-      console.log(`Producto con ID ${id} eliminado.`); // Feedback
+      console.log(`Producto con ID ${id} eliminado.`);
       exito = 1;
     } else {
       console.log(`Error: Producto con ID ${id} no encontrado`);
@@ -129,3 +127,5 @@ class ProductsManager {
       - stringify: pasa de objeto a .json
       - JSON.parse(data): pasa de .json a objeto
 */
+const productsManager = new ProductsManager();
+module.exports = productsManager; 

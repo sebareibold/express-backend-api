@@ -25,6 +25,7 @@ apirest-practice/
     │   └── products.json
     ├── managers/
     │   └── ProductsManager.js
+    │   └── CartsManager.js   
     ├── public/
     ├── routes/
     ├── services/
@@ -34,15 +35,54 @@ apirest-practice/
 
 --------------- Explicación de Directorios (src) ---------------
 
-- config/: Archivos de configuración de la aplicación (ej: ajustes de base de datos, puertos, variables de entorno específicas).
+- config/: Archivos de configuracion de la aplicacion (ej: ajustes de base de datos, puertos, variables de entorno específicas).
 - controllers/: Contiene la lógica para manejar las solicitudes entrantes de los clientes y enviar las respuestas. Actúan como intermediarios.
 - db/: Archivos relacionados con la base de datos o fuentes de datos persistentes (ej: archivos JSON, scripts SQL iniciales).
 - managers/: Encargados de la lógica de negocio o la gestión de datos. A menudo coordinan entre controladores y servicios/db.
 - public/: Archivos estáticos accesibles directamente desde el navegador (ej: HTML, CSS, imágenes, JavaScript del lado del cliente).
-- routes/: Define las rutas URL de la aplicación y mapea las URLs a las funciones controladoras correspondientes.
-- services/: Contiene la lógica de negocio reutilizable o la interacción con servicios externos o fuentes de datos.
+- routes/: Define las rutas URL de la aplicacion y mapea las URLs a las funciones controladoras correspondientes.
+- services/: Contiene la logica de negocio reutilizable o la interaccion con servicios externos o fuentes de datos.
 - utils/: Funciones de utilidad o ayudantes generales que se usan en varias partes del proyecto.
 
 --------------------- Otros ---------------------
 
 - Ctrl + shift + A, comentar todo lo seleccionado
+
+
+--------------- Concepto de Req ------------------
+    En si seria lo requerido desde el front
+    Contiene:
+        - PARAMS{}
+        - QUERY{}
+        - BODY{}
+    ¿Como accedes a cada seccion?
+    ej: const dataUserName = req.params.username
+    // Pruebas 
+    app.get('/info/:username', (req,res)=> {
+        const params = req.params;
+        const query = req.query;
+        const body = req.body;
+        res.status(200).json({name: "Informacion de  require", parametros: params.username, consulta: query, cuerpo: body} )
+    })
+
+--------------- Concepto de Res ------------------
+    Contiene la respuesta que mandaremos al front
+    los métodos que contiene son :
+    res.status(code) → Define el código de estado HTTP (ej. 200, 404, 500).
+    res.send(data) → Envía una respuesta simple (texto, HTML, JSON, etc).
+    res.json(obj) → Envía una respuesta en formato JSON (ideal para APIs).
+    res.redirect(url) → Redirige a otra URL.
+    res.set(header, value) → Establece encabezados personalizados.
+
+------------- Concepto de Middleware ----------------
+
+    Ejemplo de get con funciones callback:
+    app.get('/', funcionX,()=>{}, (req,res)=>{})
+
+    En este caso funcionX y la de al lado pueden 
+    son funciones intermediaras (Estas funciones, 
+    intermedias son denominadsa middleware, estas son
+    usadas normalmente para hacer validaciones)
+    se ejecutan para luego ejecutar la funcion final
+    donde definis  realmente tu respuesta "res". 
+
