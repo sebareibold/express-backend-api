@@ -14,137 +14,124 @@ router.get("/", async (req, res) => {
   }
 });
 
-router.get("/:pid", async (req, res) => {
+router.get("/:cid", async (req, res) => {
   try {
-    const pid = req.params.pid;
-    const cartId = parseInt(pid);
+    const cid = req.params.cid;
+    const cartId = parseInt(cid);
 
-    // Validacion (Fail-Fast): ID
+    // Validacion (Fail-Fast)
     if (isNaN(cartId)) {
-      return res.status(400).json({ 
+      return res.status(400).json({
         success: false,
         error: "ID de carrito inválido. Debe ser un número.",
       });
     }
-    const cart = await cartsManager.getCart(cartId); 
+    const cart = await cartsManager.getCart(cartId);
     res.status(200).json({ success: true, cart });
-
   } catch (e) {
-      if (e.message && e.message.includes("no encontrado")) {
-        res.status(404).json({
-            success: false,
-            error: e.message
-        });
+    if (e.message && e.message.includes("no encontrado")) {
+      res.status(404).json({
+        success: false,
+        error: e.message,
+      });
     } else {
-        res.status(500).json({ success: false, error: e.message });
+      res.status(500).json({ success: false, error: e.message });
     }
   }
 });
-
 
 router.post("/", async (req, res) => {
   try {
     const { products } = req.body;
 
-    // Validacion (Fail-Fast): products
     if (!products || !Array.isArray(products)) {
-      return res.status(400).json({ 
+      return res.status(400).json({
         success: false,
         error: "El cuerpo de la petición debe contener un array 'products'.",
       });
     }
-    const newCart = await cartsManager.addCart(products); 
-    res.status(201).json({ success: true, cart: newCart }); 
-
+    const newCart = await cartsManager.addCart(products);
+    res.status(201).json({ success: true, cart: newCart });
   } catch (e) {
     res.status(500).json({ success: false, error: e.message });
   }
 });
 
 
-router.put("/:pid", async (req, res) => {
-  try {
-    const pid = req.params.pid;
-    const cartId = parseInt(pid);
+router.post("/:cid/product/:pid", async (req, res) => {
+  const cid = req.params.cid;  
+  const cartId = parseInt(cid);  
 
-    // Validacion (Fail-Fast 1): ID Carrito
-    if (isNaN(cartId)) {
-      return res.status(400).json({ 
+  const pid = req.params.pid;
+  const prodId = parseInt(pid);
+
+  const { quantity } = req.body;
+
+  try {
+    if (isNaN(cartId) || cartId === "") {
+      return res.status(400).json({
         success: false,
-        error: "ID de carrito inválido. Debe ser un número.",
+        error: "ID de carrito inválido o faltante en los parámetros.",
       });
     }
 
-    const { operacion, product } = req.body;
+    if (isNaN(prodId) || prodId === "") {
+      return res.status(400).json({
+        success: false,
+        error: "ID de producto inválido o faltante en los parámetros.",
+      });
+    }
 
-    // Validacion (Fail-Fast 2): Body y att de body 
-    if (!req.body || !operacion || !product) {
+    if (
+      quantity === undefined ||
+      typeof quantity !== "number" ||
+      quantity <= 0
+    ) {
       return res.status(400).json({
         success: false,
         error:
-          "Cuerpo de la petición inválido. Faltan 'operacion' o 'product'.",
+          "El cuerpo de la petición debe contener 'quantity' como un número positivo.",
       });
     }
-
-    // Validacion (Fail-Fast 3): Operacion
-    if (operacion !== "agregar" && operacion !== "eliminar") {
-      return res.status(400).json({ 
-        success: false,
-        error: "Operación inválida. Debe ser 'agregar' o 'eliminar'.",
-      });
-    }
-
-    // Validacion (Fail-Fast 4): Producto 
-    if (!product || typeof product.id === 'undefined') { 
-      return res.status(400).json({ 
-        success: false,
-        error:
-          "El objeto 'product' es inválido. Debe contener al menos un 'id'.",
-      });
-    }
-      await cartsManager.updateCart(cartId, product, operacion); 
-
+    await cartsManager.updateCart(cartId, prodId, quantity);
     res.status(200).json({
       success: true,
-      message: `Carrito ${cartId} actualizado (${operacion} producto ${product.id}).`,
+      message: "Producto agregado al carrito exitosamente.",
     });
 
   } catch (e) {
- if (e.message && e.message.includes("no encontrado")) { 
-      res.status(404).json({ success: false, error: e.message }); 
-    } else if (e.message && e.message.includes("inválid")) {
-      res.status(400).json({ success: false, error: e.message });
-    }
-     else {
-      res.status(500).json({ success: false, error: e.message });
-    }
+    console.error("Error en POST /api/carts/:cid/product/:pid:", e);
+    res.status(500).json({
+      success: false,
+      error: "Error interno del servidor al agregar el producto al carrito.",
+    });
   }
 });
 
-router.delete("/:pid", async (req, res) => {
+router.delete("/:cid", async (req, res) => {
   try {
-    const pid = req.params.pid;
-    const cartId = parseInt(pid);
+    const cid = req.params.cid;
+    const cartId = parseInt(cid);
 
-    // Validacion (Fail-Fast): ID inválido 
     if (isNaN(cartId)) {
       return res.status(400).json({
         success: false,
         error: "ID de carrito inválido. Debe ser un número.",
       });
     }
-    await cartsManager.deleteCart(cartId); 
+    await cartsManager.deleteCart(cartId);
 
-    res.status(200).json({ success: true, message: `Carrito con ID ${cartId} eliminado.` });
-
+    res
+      .status(200)
+      .json({ success: true, message: `Carrito con ID ${cartId} eliminado.` });
   } catch (e) {
-      if (e.message && e.message.includes("no encontrado")) { 
-        res.status(404).json({
-            success: false,
-            error: e.message
-        });
+    if (e.message && e.message.includes("no encontrado")) {
+      res.status(404).json({
+        success: false,
+        error: e.message,
+      });
     } else {
-        res.status(500).json({ success: false, error: e.message });
+      res.status(500).json({ success: false, error: e.message });
     }
   }
 });

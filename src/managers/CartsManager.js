@@ -15,7 +15,6 @@ class CartsManager {
       this.carts = JSON.parse(data);
       const lastCart = this.carts[this.carts.length - 1];
       this.nextId = lastCart ? lastCart.id + 1 : 1;
-      
     } catch (error) {
       console.error("Error al leer el archivo de carts:", error.message);
       this.carts = [];
@@ -70,36 +69,34 @@ class CartsManager {
     return exito;
   }
 
-  async updateCart(id, product, operacion) {
-    let exito = 0;
-    if (id && product && operacion) {
-      const cartIndex = this.carts.findIndex((cart) => cart.id == id);
-      if (cartIndex !== -1) {
-        if (operacion === "eliminar") {
-          const prodIndex = this.carts[cartIndex].products.findIndex(
-            (prod) => prod.id === product.id
-          );
-
-          this.carts[cartIndex].products.splice(prodIndex, 1);
-          await this.saveCarts();
-
-          console.log(
-            `Producto con ID ${product.id} eliminado, del carito ${id}`
-          );
-
-          exito = 1;
-        } else if (operacion === "agregar") {
-          this.carts[cartIndex].products.push(product);
-        }
-      } else {
-        console.log("Error al encontar el index");
-      }
-    } else {
-      console.log("Error en los parametros de updateCart");
+  async updateCart(id, productId, quantity) {
+    if (typeof quantity !== 'number' || quantity <= 0) {
+      console.error("Error en los parámetros: id, productId deben ser números, quantity debe ser un número positivo.");
+      return false;
     }
-    return exito;
+
+    const cartIndex = this.carts.findIndex((cart) => cart.id === id);
+    if (cartIndex === -1) {
+      console.log(`Error: Carrito con ID ${id} no encontrado.`);
+      return false; 
+    }
+
+    const cart = this.carts[cartIndex];productId
+    const productIndex = cart.products.findIndex((item) => item.productId === productId);
+
+    if (productIndex === -1) {
+      cart.products.push({ productId: productId, quantity: quantity });
+      console.log(`Producto ${productId} añadido al carrito ${id}. Cantidad: ${quantity}`);
+    } else {
+      cart.products[productIndex].quantity += quantity;
+      console.log(`Cantidad del producto ${productId} actualizada en el carrito ${id}. Nueva cantidad: ${cart.products[productIndex].quantity}`);
+    }
+
+    await this.saveCarts();
+
+    return true; 
   }
 }
 
-const cartsManager = new CartsManager(); 
-module.exports = cartsManager; 
+const cartsManager = new CartsManager();
+module.exports = cartsManager;

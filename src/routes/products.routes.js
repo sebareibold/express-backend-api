@@ -39,22 +39,24 @@ router.get("/:pid", async (req, res) => {
   }
 });
 
-router.post("/:pid", async (req, res) => {
-  const { id, name, price, stock, category, description } = req.body;
+router.post("/", async (req, res) => {
+  const { title, price, stock, code, category, description , status,  thumbnails} = req.body;
 
-  if (!id || !name || !price || !stock || !category || !description) {
+  if (!title || !price || !stock || !code || !category || !description || !status || !thumbnails) {
     return res.status(400).json({
       success: false,
       error: "El cuerpo de la petición debe contener att correctos",
     });
   }
   const newProd = await productManager.addProduct(
-    id,
-    name,
+    title,
+    description,
     price,
-    stock,
     category,
-    description
+    code,
+    stock, 
+    status,
+    thumbnails
   );
   try {
     res.status(201).json({ success: true, producto: newProd });
@@ -83,19 +85,20 @@ router.put("/:pid", async (req, res) => {
     }
 
     const { valor, campo } = req.body;
+    const campos = [
+      "title",
+      "price",
+      "stock",
+      "category",
+      "description",
+      "code",
+    ];
 
-    if (
-      !valor ||
-      campo !== "name" ||
-      campo !== "price" ||
-      campo !== "stock" ||
-      campo !== "category" ||
-      campo !== "description"
-    ) {
+    if (!valor || !campos.includes(campo)) {
       return res.status(400).json({
         success: false,
         error:
-          "El cuerpo de la petición debe contener el body correcto (formato)",
+          "El cuerpo de la petición debe contener un campo válido (title, price, etc.) y un valor.",
       });
     }
 
@@ -130,12 +133,10 @@ router.delete("/:pid", async (req, res) => {
         .status(200)
         .json({ success: true, message: "Exito en la eliminacion" });
     } else {
-      res
-        .status(200)
-        .json({
-          success: true,
-          error: "Error en la eliminacion, verificar body.)",
-        });
+      res.status(200).json({
+        success: true,
+        error: "Error en la eliminacion, verificar body.)",
+      });
     }
   } catch (e) {
     res.status(500).json({ success: false, error: e.message });

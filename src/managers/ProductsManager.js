@@ -31,39 +31,42 @@ class ProductsManager {
     }
   }
 
-  async addProduct(title, description, price, thumbnail, code, stock) {
-    let exito = 0;
+  async addProduct(title, description, price, category,code, stock, status, thumbnails) {
+    let newProduct;
     if (
       !(
         !title ||
         !description ||
         price == null ||
-        !thumbnail ||
+        !category||
         !code ||
-        stock == null
+        stock == null ||
+        !thumbnails  ||
+        !status
       )
     ) {
       if (this.products.some((p) => p.code !== code)) {
         const id = this.nextId;
         this.nextId++;
-        const newProduct = {
+         newProduct = {
           id,
           title,
           description,
           price,
-          thumbnail,
+          category,
           code,
           stock,
+          status, 
+          thumbnails
         };
         this.products.push(newProduct);
         await this.saveProducts();
-        exito = 0;
         console.log("Producto añadido:", newProduct);
       }
     } else {
       console.log("Error: Algun campo no fue dado correctamente");
     }
-    return exito;
+    return newProduct;
   }
 
   getProducts() {
