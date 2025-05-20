@@ -16,6 +16,7 @@ async function main() {
     app.listen(PORT, () => {
       console.log(`Server Escuchando en el puerto: http://localhost:${PORT}`);
     });
+    
   } catch (e) {
     console.error("Error al iniciar la aplicación:", e);
     process.exit(1);
