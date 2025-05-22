@@ -1,0 +1,13 @@
+<div class="container-info">
+  <h1> Lista de Productos de la Base de Datos</h1>
+  {{#each products}}
+    <p>Id: {{id}}</p>
+    <p>Título: {{title}}</p>
+    <p>Descripcion: {{description}}</p>
+    <p>Precio: ${{price}}</p>
+    <p>categoria: {{category}}</p>
+    <p>Codigo: {{code}}</p>
+    <p>Stock: {{stock}}</p>
+    <hr />
+  {{/each}}
+</div>

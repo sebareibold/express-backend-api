@@ -5,52 +5,26 @@
     <title>Bienvenida con Datos</title>
     <link rel="stylesheet" href="/css/style.css" />
   </head>
-  <body>
-    <div class="grilla">
-      <div>
-        <h1>Rutas de APIRest</h1>
-        <h4>Obtener los todos productos</h4>
-        <div class="border" style="border: 2px solid green">
-          <p>
-            http://localhost:8080/api/products/
-          </p>
-        </div>
+<body class="body">
 
-        <h4>Obtener un producto</h4>
-        <div class="border" style="border: 1px solid yellow">
-          <p>
-            http://localhost:8080/api/products/2
-          </p>
+    <header>
+        <div class="header-div">
+            <h1>APIRest Productos y Carritos</h1>
         </div>
+    </header>
 
-        <h4>Obtener los todos cart</h4>
-        <div class="border" style="border: 2px solid green">
-          <p>
-            http://localhost:8080/api/cart/
-          </p>
-        </div>
-        <h4>Obtener un cart</h4>
-        <div class="border" style="border: 0.2px solid yellow">
-          <p>
-            http://localhost:8080/api/cart/2
-          </p>
-        </div>
-      </div>
-      <div>
-        <h1> Lista de Productos de la Base de Datos</h1>
-        {{#each products}}
-          <p>Id: {{id}}</p>
-          <p>Título: {{title}}</p>
-          <p>Descripcion: {{description}}</p>
-          <p>Precio: ${{price}}</p>
-          <p>categoria: {{category}}</p>
-          <p>Codigo: {{code}}</p>
-          <p>Stock: {{stock}}</p>
-          <hr />
-        {{/each}}
-      </div>
-
+    <div class="">
+        <main>
+            {{{body}}}  
+        </main>
     </div>
 
-  </body>
+    <footer>
+        <div class="footer-div">
+            <p>© 2025.  My APIRest By Sebastian Alejandro Reibold.</p>
+        </div>
+    </footer>
+
+</body>
+</html>
 </html>

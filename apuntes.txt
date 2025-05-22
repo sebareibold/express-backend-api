@@ -86,3 +86,26 @@ apirest-practice/
     se ejecutan para luego ejecutar la funcion final
     donde definis  realmente tu respuesta "res". 
 
+
+----------------------- Handlenbars -------------------
+
+    En si el funcionamiento es el siguiente; en principio main.hbs seria la plantailla base (layout), es la
+    estructura general de la pagina puede tener header(dinamico), body ( lo mas dinamico comunmente) y 
+    footer(dinamico). Luego el index.hbs seria la plantila espeficia que hereda la estructura del main
+    esta se usa normalmente como pantalla de inicio. 
+    
+    Todo esto se debe de declarar en el engine del server, es decir, declarar que por ejempo main.hbs 
+    de esta manera:    " defaultLayout: "main", ". Luego vos renderizas cada estructura adicional
+    (como el index) con un render... al momento de declarar el endpoint.
+
+    Conceptos:
+
+     - El archivo main.handlebars  actúa como una plantilla base o layout. Es la estructura general
+    de la página que será compartida por todas las plantillas de tu aplicación. Aquí es donde 
+    defines elementos que se repetirán en varias páginas, como el encabezado, pie de página, y 
+    la estructura básica del HTML.
+
+     -El archivo index.handlebars  es una plantilla específica que hereda la estructura de main.handlebars.
+    Esta plantilla se utiliza para definir el contenido específico de una página, como la página de inicio
+
+    
