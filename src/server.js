@@ -56,11 +56,10 @@ app.get("/realtimeproducts", async (req, res) => {
 // ----------------------------- Configuracion de Socket IO -------------------------------
 io.on("connection", (socket) => {
   console.log("Nuevo cliente conectado :)");
-});
 
-io.on("disconnection", (socket) => {
-  console.log("Cliente Desconectado :(");
+  socket.on("disconnect", () => {
+    console.log("Cliente Desconectado :("); 
+  });
 });
 
 module.exports = http;
-

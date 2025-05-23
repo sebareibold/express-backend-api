@@ -1,13 +1,13 @@
------------------ Apuntes personales -----------------
+========================================== Apuntes personales ==========================================
 
---------------- Como crear el proyecto ---------------
+========================================== Como crear el proyecto ==========================================
 
 1) Creo el package.json, con node init -y
 2) Instalar express
 3) Crear el .gitignore
 4) Crear mi estructura del proyecto
 
---------------- Estructura del Proyecto ---------------
+========================================== Estructura del Proyecto ==========================================
 
 apirest-practice/
 ├── .env
@@ -33,7 +33,7 @@ apirest-practice/
         ├── index.js
         └── server.js
 
---------------- Explicación de Directorios (src) ---------------
+========================================== Explicación de Directorios (src) ==========================================
 
 - config/: Archivos de configuracion de la aplicacion (ej: ajustes de base de datos, puertos, variables de entorno específicas).
 - controllers/: Contiene la lógica para manejar las solicitudes entrantes de los clientes y enviar las respuestas. Actúan como intermediarios.
@@ -44,12 +44,12 @@ apirest-practice/
 - services/: Contiene la logica de negocio reutilizable o la interaccion con servicios externos o fuentes de datos.
 - utils/: Funciones de utilidad o ayudantes generales que se usan en varias partes del proyecto.
 
---------------------- Otros ---------------------
+========================================== Otros ==========================================
 
 - Ctrl + shift + A, comentar todo lo seleccionado
 
 
---------------- Concepto de Req ------------------
+========================================== Concepto de Req ==========================================
     En si seria lo requerido desde el front
     Contiene:
         - PARAMS{}
@@ -65,7 +65,7 @@ apirest-practice/
         res.status(200).json({name: "Informacion de  require", parametros: params.username, consulta: query, cuerpo: body} )
     })
 
---------------- Concepto de Res ------------------
+========================================== Concepto de Res ==========================================
     Contiene la respuesta que mandaremos al front
     los métodos que contiene son :
     res.status(code) → Define el código de estado HTTP (ej. 200, 404, 500).
@@ -74,7 +74,7 @@ apirest-practice/
     res.redirect(url) → Redirige a otra URL.
     res.set(header, value) → Establece encabezados personalizados.
 
-------------- Concepto de Middleware ----------------
+========================================== Concepto de Middleware ==========================================
 
     Ejemplo de get con funciones callback:
     app.get('/', funcionX,()=>{}, (req,res)=>{})
@@ -87,7 +87,7 @@ apirest-practice/
     donde definis  realmente tu respuesta "res". 
 
 
------------------------ Handlenbars -------------------
+========================================== Handlenbars ==========================================
 
     En si el funcionamiento es el siguiente; en principio main.hbs seria la plantailla base (layout), es la
     estructura general de la pagina puede tener header(dinamico), body ( lo mas dinamico comunmente) y 
@@ -108,4 +108,91 @@ apirest-practice/
      -El archivo index.handlebars  es una plantilla específica que hereda la estructura de main.handlebars.
     Esta plantilla se utiliza para definir el contenido específico de una página, como la página de inicio
 
+
+========================================== Websocket (TCP) ============================================
+
+(*) Qué son los WebSockets y Socket.IO y cuál es su motivación?
+
+    - Los WebSockets son un protocolo de comunicación que establece una conexión bidireccional 
+    y persistente (como una tubería abierta y continua) entre un cliente (como un navegador) y 
+    un servidor.
+
+    - A diferencia del protocolo HTTP tradicional, donde el cliente siempre tiene que hacer una
+    solicitud para que el servidor responda , con WebSockets ambos lados pueden enviar y recibir 
+    datos en cualquier momento una vez que la conexión está establecida.
+
+    - Socket.IO es una biblioteca de JavaScript  que simplifica enormemente el uso de WebSockets
+    y otras tecnologías para implementar la comunicación en tiempo real en aplicaciones web. La 
+    motivación principal es permitir que las aplicaciones web sean más interactivas y dinámicas.
+    Es esencial para funcionalidades como chats en tiempo real, juegos multijugador, paneles de 
+    control con datos actualizados al instante o cualquier cosa que necesite actualizaciones
+    constantes y fluidas sin que el cliente tenga que estar pidiendo información repetidamente.
+
+
+(*) METODOS BASICOS
+
+    La comunicación con Socket.IO se basa en eventos. Tanto el servidor como el cliente "emiten" 
+    (envían) eventos con datos, y "escuchan" (on) eventos que les llegan.
+
+    Lado del servidor (Node.js):
+
+        - io.on("connection", (socket) => { ... }): Este es el evento más importante del servidor io 
+        (la instancia global de Socket.IO). Se dispara cada vez que un nuevo cliente se conecta al 
+        servidor. La función que le pasas recibe un parámetro socket, que es un objeto que representa 
+        la conexión individual de ese cliente que se acaba de conectar
+
+        - socket.on("nombreEvento", (datos) => { ... }): Se usa dentro del manejador de connection 
+        (es decir, en el objeto socket de un cliente específico) . Sirve para escuchar eventos 
+        específicos que envía ese cliente. El nombre del evento ("nombreEvento") es algo que tú
+        defines (como "insertar", "eliminar", "chat"), y la función recibe los datos que envió el cliente 
+        con ese evento
+
+        - socket.on("disconnect", () => { ... }): También se usa dentro del manejador de connection 
+        en el objeto socket. Escucha específicamente el evento que se dispara cuando ese cliente 
+        individual se desconecta.
+
+        - socket.broadcast.emit("nombreEvento", datos): Se usa en el servidor, en el objeto socket de 
+        un cliente. Envía un evento con datos a todos los clientes conectados excepto al que lo envió 
+        (este socket). Es útil en un chat, por ejemplo, para que cuando un usuario envía un mensaje,
+        ese mensaje llegue a todos los demás.
+
+        - io.emit("nombreEvento", datos): Se usa en el servidor, en la instancia global io. Envía un 
+        evento con datos a todos los clientes conectados, incluyendo al que posiblemente lo originó. 
+        Útil para enviar notificaciones generales a todos los usuarios.
+
+    Lado del cliente (navegador):
+
+        - io(): Crea una instancia del cliente Socket.IO e intenta conectarse al servidor. Por defecto,
+        intenta conectarse al mismo servidor que sirvió la página web.
+        
+        - socket.emit("nombreEvento", datos): Envía un evento con datos desde el cliente al servidor.
+
+        - socket.on("nombreEvento", (datos) => { ... }): Escucha eventos específicos que el servidor 
+        le envía a este cliente.
+
+(*) Uso del IO o Socket
     
+    - io: Es la instancia global del servidor Socket.IO. Se usa para cosas que afectan al servidor en 
+    general o a todos los clientes. Por ejemplo, para saber cuándo cualquier cliente se conecta
+    (io.on("connection", ...)) o para enviar un mensaje a todos los clientes (io.emit(...))
+
+    - socket: Es una instancia que representa la conexión de un cliente individual y específico.
+    La obtienes como parámetro cuando un cliente se conecta en el evento io.on("connection", (socket) => { ... }). 
+    Se usa para interactuar con ese cliente en particular o reaccionar a lo que ese cliente hace.
+    Por ejemplo, para escuchar eventos de ese cliente (socket.on(...)), saber cuándo ese cliente
+    se desconecta (socket.on("disconnect", ...)), o enviar un mensaje a todos menos a ese cliente 
+    (socket.broadcast.emit(...)).
+
+(*) Como se inicializar el proyecto con WebSockets
+
+    Creas un archivo principal para el servidor (ej: index.js o app.js). En ese archivo, 
+    importas express, el módulo http nativo de Node.js, y socket.io. Creas una aplicación
+    Express (const app = express();). Creas un servidor HTTP pasando la app de Express 
+    (const server = require("http").createServer(app);). Socket.IO se adjunta a este 
+    servidor HTTP. Inicializas Socket.IO pasándole el servidor HTTP creado: 
+    const io = require("socket.io")(server);
+    
+    Esta es la instancia global io.Puedes configurar opciones al inicializar io, como 
+    permitir conexiones desde cualquier origen (CORS): const io = require("socket.io")(server, { cors: { origin: "*" } });
+    Defines los manejadores de eventos como io.on("connection", ...). Inicias el servidor HTTP 
+    para que escuche peticiones y conexiones: server.listen(puerto, () => { ... }), por ejemplo server.listen(4001, ...)
