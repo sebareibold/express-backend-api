@@ -1,4 +1,4 @@
-const app = require("./src/server.js");
+const http = require("./src/server.js");
 const PORT = 8080; //Se usa comunmente el puerto 8080 en produccion
 
 async function main() {
@@ -13,7 +13,7 @@ async function main() {
       "CartsManager y ProductsManager inicializado correctamente. Datos cargados."
     );
 
-    app.listen(PORT, () => {
+    http.listen(PORT, () => {
       console.log(`Server Escuchando en el puerto: http://localhost:${PORT}`);
     });
     

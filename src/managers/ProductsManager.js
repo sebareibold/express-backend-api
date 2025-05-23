@@ -6,6 +6,7 @@ class ProductsManager {
     this.filePath = "";
     this.products = [];
     this.nextId = 0;
+    this.io = null;
   }
 
   async init() {
@@ -19,6 +20,11 @@ class ProductsManager {
       console.error("Error al leer el archivo de productos:", error.message);
       this.products = []; // fallback por si el archivo está vacío o no existe
     }
+  }
+
+  setSocketManager(io) {
+    this.io = io;
+    console.log("ProductManager tiene acceso al socket Socket.io");
   }
 
   async saveProducts() {
@@ -71,8 +77,10 @@ class ProductsManager {
         this.products.push(newProduct);
         await this.saveProducts();
         console.log("Producto añadido:", newProduct);
-        //io.emit('productListUpdate', products)
-        //console.log("Socket emitio un mensaje")
+
+        //Implementacion de Websockets, emitimos cambios a los clientes que estan conectados en "/realTiemProducts"
+        this.io?.emit("productListUpdate", this.products);
+        console.log("Socket emitio un mensaje");
       }
     } else {
       console.log("Error: Algun campo no fue dado correctamente");
@@ -99,8 +107,14 @@ class ProductsManager {
     );
     let exito;
     if (productIndex !== -1) {
+      
       this.products[productIndex][campo] = valor;
       await this.saveProducts();
+
+      //Implementacion de Websockets, emitimos cambios a los clientes que estan conectados en "/realTiemProducts"
+      this.io?.emit("productListUpdate", this.products);
+      console.log("Socket emitio un mensaje");
+
       exito = 1;
     } else {
       console.log("Error: Producto no encontrado");
@@ -118,8 +132,11 @@ class ProductsManager {
       this.products.splice(IndexProduct, 1);
       await this.saveProducts();
       console.log(`Producto con ID ${id} eliminado.`);
-      //io.emit('productListUpdate', products)
-      //console.log("Socket emitio un mensaje")
+
+      //Implementacion de Websockets, emitimos cambios a los clientes que estan conectados en "/realTiemProducts"
+      this.io?.emit("productListUpdate", this.products);
+      console.log("Socket emitio un mensaje");
+
       exito = 1;
     } else {
       console.log(`Error: Producto con ID ${id} no encontrado`);
@@ -128,6 +145,9 @@ class ProductsManager {
     return exito;
   }
 }
+
+const productsManager = new ProductsManager();
+module.exports = productsManager;
 
 /*
     Conceptos Nuevos
@@ -143,5 +163,3 @@ class ProductsManager {
       - stringify: pasa de objeto a .json
       - JSON.parse(data): pasa de .json a objeto
 */
-const productsManager = new ProductsManager();
-module.exports = productsManager;

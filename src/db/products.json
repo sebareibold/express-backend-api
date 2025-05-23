@@ -1,12 +1,21 @@
 [
   {
-    "id": 2,
-    "title": "Teclado Mecánico",
-    "description": "Teclado con switches Cherry MX.",
-    "price": 85,
+    "id": 1,
+    "title": "Mouse Con Cable",
+    "description": "Mouse ergonómico y preciso.",
+    "price": 15.99,
     "category": "peripherals",
-    "code": 2,
-    "stock": 50
+    "code": 3,
+    "stock": 120
+  },
+  {
+    "id": 2,
+    "title": "Teclado NHR002 Inalámbrico",
+    "description": "Mouse ergonómico y preciso.",
+    "price": 90.99,
+    "category": "peripherals",
+    "code": 3,
+    "stock": 120
   },
   {
     "id": 3,
