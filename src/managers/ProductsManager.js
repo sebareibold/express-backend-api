@@ -31,24 +31,33 @@ class ProductsManager {
     }
   }
 
-  async addProduct(title, description, price, category,code, stock, status, thumbnails) {
+  async addProduct(
+    title,
+    description,
+    price,
+    category,
+    code,
+    stock,
+    status,
+    thumbnails
+  ) {
     let newProduct;
     if (
       !(
         !title ||
         !description ||
         price == null ||
-        !category||
+        !category ||
         !code ||
         stock == null ||
-        !thumbnails  ||
+        !thumbnails ||
         !status
       )
     ) {
       if (this.products.some((p) => p.code !== code)) {
         const id = this.nextId;
         this.nextId++;
-         newProduct = {
+        newProduct = {
           id,
           title,
           description,
@@ -56,12 +65,14 @@ class ProductsManager {
           category,
           code,
           stock,
-          status, 
-          thumbnails
+          status,
+          thumbnails,
         };
         this.products.push(newProduct);
         await this.saveProducts();
         console.log("Producto añadido:", newProduct);
+        //io.emit('productListUpdate', products)
+        //console.log("Socket emitio un mensaje")
       }
     } else {
       console.log("Error: Algun campo no fue dado correctamente");
@@ -107,6 +118,8 @@ class ProductsManager {
       this.products.splice(IndexProduct, 1);
       await this.saveProducts();
       console.log(`Producto con ID ${id} eliminado.`);
+      //io.emit('productListUpdate', products)
+      //console.log("Socket emitio un mensaje")
       exito = 1;
     } else {
       console.log(`Error: Producto con ID ${id} no encontrado`);
@@ -131,4 +144,4 @@ class ProductsManager {
       - JSON.parse(data): pasa de .json a objeto
 */
 const productsManager = new ProductsManager();
-module.exports = productsManager; 
+module.exports = productsManager;

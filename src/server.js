@@ -1,6 +1,8 @@
 //------------------------------ Módulos Requeridos ------------------------------
 const express = require("express");
 const app = express(); //App actua como servidor
+const http = require("http").createServer(app);
+//const io = require(Socket.io)(http);
 
 const handlebars = require("express-handlebars");
 const path = require("path");
@@ -48,6 +50,19 @@ app.get("/realtimeproducts", async (req, res) => {
   res.render("realTimeProducts.hbs", { products: products });
 });
 
+// ----------------------------- Configuracion de Socket IO -------------------------------
+io.on("connection", (socket) => {
+  console.log("Nuevo cliente conectado!");
+
+  // Escuchar el evento de "agregar producto" desde el cliente
+  socket.on("productListUpdate", () => {
+    console.log("Notificacion de Actualizacion Recibida");
+    const products = productManager.getProducts();
+  });
+
+});
+
+//*/
 module.exports = app;
 
 /*
