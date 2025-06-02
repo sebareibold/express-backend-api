@@ -2,6 +2,10 @@
 const express = require("express");
 const app = express(); //App actua como servidor
 const http = require("http").createServer(app); // Crea el servidor Base
+require("dotenv").config();
+
+//Base de Datos
+const mongoose = require("mongoose");
 
 const { Server } = require("socket.io");
 const io = new Server(http);
@@ -58,8 +62,22 @@ io.on("connection", (socket) => {
   console.log("Nuevo cliente conectado :)");
 
   socket.on("disconnect", () => {
-    console.log("Cliente Desconectado :("); 
+    console.log("Cliente Desconectado :(");
   });
 });
+
+// ------------------------------ Configuracion de Mongoose ---------------------------------
+const enviroment = async () => {
+  mongoose
+    .connect(process.env.MONGODB_URI)
+    .then(() => {
+      console.log("Conectado a la base de datos de Mongo Atlas");
+    })
+    .catch((e) => {
+      console.log("La conexión no se ha podido establecer correctamente:", e);
+    });
+};
+
+enviroment();
 
 module.exports = http;

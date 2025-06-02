@@ -15,30 +15,4 @@
 </div>
 
 <script src="/socket.io/socket.io.js"></script>
-<script>
-  const socket = io(); 
-
-  socket.on("productListUpdate", (products) => {
-    console.log("Productos actualizados recibidos:", products);
-
-    const container = document.getElementById("productList");
-
-    container.innerHTML = "<h1> Lista de Productos de la Base de Datos</h1>";
-
-    // Agregar productos dinamicamente
-    products.forEach((product) => {
-      container.innerHTML += `
-        <div class="product-item">
-          <p>Id: ${product.id}</p>
-          <p>Título: ${product.title}</p>
-          <p>Descripción: ${product.description}</p>
-          <p>Precio: $${product.price}</p>
-          <p>Categoría: ${product.category}</p>
-          <p>Código: ${product.code}</p>
-          <p>Stock: ${product.stock}</p>
-          <hr />
-        </div>
-      `;
-    });
-  });
-</script>
+<script src="/js/socket-client.js"></script>

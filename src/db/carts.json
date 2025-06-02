@@ -1,1 +1,10 @@
-[{"id":1,"products":[{"productId":3,"quantity":2},{"productId":2,"quantity":1}]},{"id":3,"products":[{"productId":7,"quantity":5}]}]
+[
+  {
+    "id": 1,
+    "products": [
+      { "productId": 3, "quantity": 2 },
+      { "productId": 2, "quantity": 1 }
+    ]
+  },
+  { "id": 3, "products": [{ "productId": 7, "quantity": 5 }] }
+]
