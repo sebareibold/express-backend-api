@@ -1,47 +1,51 @@
-const fs = require("fs").promises // Usamos promesas de fs para trabajar con async/await
-const path = require("path")
-const socketService = require("../services/socket.service")
+const mongoose = require("mongoose");
+const ProductsScheme = require("../models/ProductSchema");
+
+const socketService = require("../services/socket.service");
 
 class ProductsManager {
   constructor() {
-    this.filePath = ""
-    this.products = []
-    this.nextId = 0
+    this.filePath = "";
+    this.products = [];
+    this.nextId = 0;
   }
 
   async init() {
     try {
-      this.filePath = path.join(__dirname, "..", "db", "products.json")
-      const data = await fs.readFile(this.filePath, "utf8")
-      this.products = JSON.parse(data)
-      const lastProd = this.products[this.products.length - 1]
-      this.nextId = lastProd ? lastProd.id + 1 : 1
+      console.log("ProductsManager inicializado para MongoDB");
     } catch (error) {
-      console.error("Error al leer el archivo de productos:", error.message)
-      this.products = [] // fallback por si el archivo está vacío o no existe
+      console.error("Error al leer el archivo de productos:", error.message);
+      //this.products = [] // fallback por si el archivo está vacío o no existe
     }
   }
 
-  // Eliminar el método setSocketManager ya que no lo necesitamos más
-  // El método setSocketManager(io) se elimina
-
-  async saveProducts() {
-    try {
-      const data = JSON.stringify(this.products)
-      await fs.writeFile(this.filePath, data, "utf8")
-      console.log("Se actualizado la base de datos (products.json )")
-    } catch {
-      console.log("Error al guardar los productos")
-    }
-  }
-
-  async addProduct(title, description, price, category, code, stock, status, thumbnails) {
-    let newProduct
-    if (!(!title || !description || price == null || !category || !code || stock == null || !thumbnails || !status)) {
+  async addProduct(
+    title,
+    description,
+    price,
+    category,
+    code,
+    stock,
+    status,
+    thumbnails
+  ) {
+    let newProduct;
+    if (
+      !(
+        !title ||
+        !description ||
+        price == null ||
+        !category ||
+        !code ||
+        stock == null ||
+        !thumbnails ||
+        !status
+      )
+    ) {
       if (this.products.some((p) => p.code !== code)) {
-        const id = this.nextId
-        this.nextId++
-        newProduct = {
+        const id = this.nextId;
+        this.nextId++;
+        const productData = {
           id,
           title,
           description,
@@ -51,68 +55,141 @@ class ProductsManager {
           stock,
           status,
           thumbnails,
+        };
+
+        // Verificar que el codigo no exista ya en la base de datos
+        const existingProduct = await ProductsScheme.findOne({ code: code });
+        if (existingProduct) {
+          throw new Error(`Ya existe un producto con el código: ${code}`);
         }
-        this.products.push(newProduct)
-        await this.saveProducts()
-        console.log("Producto añadido:", newProduct)
+
+        const newProduct = new ProductsScheme(productData);
+        const saveProducts = await newProduct.save();
+
+        console.log("Producto añadido:", newProduct);
 
         // Usar el servicio de socket para emitir la actualización
-        socketService.emitProductUpdate(this.products)
+        const allProducts = await this.getProducts();
+        socketService.emitProductUpdate(allProducts);
+
+        return saveProducts;
       }
     } else {
-      console.log("Error: Algun campo no fue dado correctamente")
+      console.log("Error: Algun campo no fue dado correctamente");
     }
-    return newProduct
+    return newProduct;
   }
 
-  getProducts() {
-    return this.products
+  async getProducts() {
+    try {
+      const products = await ProductsScheme.find();
+      return products;
+    } catch (error) {
+      console.error("Error al obtener productos:", error.message);
+      return [];
+    }
   }
 
-  getProductById(id) {
-    const specificProduct = this.products.find((product) => product.id === id)
-    specificProduct ? console.log("Exito: Producto encontrado") : console.log("Error: Producto no encontrado")
+  async getProductById(id) {
+    try {
+      // Verificar si el ID es un ObjectId válido de MongoDB
+      if (!mongoose.Types.ObjectId.isValid(id)) {
+        console.log("Error: ID de producto inválido");
+        return null;
+      }
 
-    return specificProduct
+      const specificProduct = await ProductsScheme.findById(id);
+
+      if (specificProduct) {
+        console.log("Éxito: Producto encontrado");
+      } else {
+        console.log("Error: Producto no encontrado");
+      }
+
+      return specificProduct;
+    } catch (error) {
+      console.error("Error al buscar producto por ID:", error.message);
+      return null;
+    }
   }
 
   async updateProduct(id, campo, valor) {
-    const productIndex = this.products.findIndex((product) => product.id === id)
-    let exito
-    if (productIndex !== -1) {
-      this.products[productIndex][campo] = valor
-      await this.saveProducts()
+    try {
+      // Verificar si el ID es válido
+      if (!mongoose.Types.ObjectId.isValid(id)) {
+        console.log("Error: ID de producto inválido");
+        return 0;
+      }
 
-      // Usar el servicio de socket para emitir la actualización
-      socketService.emitProductUpdate(this.products)
+      // Campos permitidos para actualizar
+      const camposPermitidos = [
+        "title",
+        "description",
+        "price",
+        "category",
+        "code",
+        "stock",
+        "status",
+        "thumbnails",
+      ];
 
-      exito = 1
-    } else {
-      console.log("Error: Producto no encontrado")
-      exito = 0
+      if (!camposPermitidos.includes(campo)) {
+        console.log("Error: Campo no válido para actualización");
+        return 0;
+      }
+
+      const updateData = {};
+      updateData[campo] = valor;
+
+      const updatedProduct = await ProductsScheme.findByIdAndUpdate(
+        id,
+        updateData,
+        { new: true }
+      );
+
+      if (updatedProduct) {
+        console.log("Producto actualizado:", updatedProduct);
+        // Emitir actualización por WebSocket
+        const allProducts = await this.getProducts();
+        socketService.emitProductUpdate(allProducts);
+        return 1;
+      } else {
+        console.log("Error: Producto no encontrado");
+        return 0;
+      }
+    } catch (e) {
+      console.log("Error: Producto no encontrado");
+      return 0;
     }
-    return exito
   }
-
+  
   async deleteProduct(id) {
-    const IndexProduct = this.products.findIndex((product) => product.id === id)
-    let exito
-    if (IndexProduct !== -1) {
-      this.products.splice(IndexProduct, 1)
-      await this.saveProducts()
-      console.log(`Producto con ID ${id} eliminado.`)
+    try {
+      // Verificar si el ID es válido
+      if (!mongoose.Types.ObjectId.isValid(id)) {
+        console.log("Error: ID de producto inválido");
+        return 0;
+      }
 
-      // Usar el servicio de socket para emitir la actualización
-      socketService.emitProductUpdate(this.products)
+      const deletedProduct = await ProductsScheme.findByIdAndDelete(id);
+      // Verificamos si se elimino o no
+      if (deletedProduct) {
+        console.log(`Producto con ID ${id} eliminado.`);
 
-      exito = 1
-    } else {
-      console.log(`Error: Producto con ID ${id} no encontrado`)
-      exito = 0
+        // Emitir actualización por WebSocket
+        const allProducts = await this.getProducts();
+        socketService.emitProductUpdate(allProducts);
+
+        return 1;
+      } else {
+        console.log(`Error: Producto con ID ${id} no encontrado`);
+        return 0;
+      }
+    } catch (error) {
+      console.error("Error al eliminar producto:", error.message);
     }
-    return exito
   }
 }
 
-const productsManager = new ProductsManager()
-module.exports = productsManager
+const productsManager = new ProductsManager();
+module.exports = productsManager;

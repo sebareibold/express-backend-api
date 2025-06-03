@@ -2,7 +2,7 @@ const express = require("express");
 const router = express.Router();
 const productManager = require("../managers/ProductsManager");
 
-// Rutas relacionadas a Carritos
+// Obtener todos los productos
 router.get("/", async (req, res) => {
   try {
     const products = productManager.getProducts();
@@ -13,52 +13,60 @@ router.get("/", async (req, res) => {
   }
 });
 
+// Obtener producto por ID
 router.get("/:pid", async (req, res) => {
   try {
     const pid = req.params.pid;
-    const productId = parseInt(pid);
-
-    if (isNaN(productId)) {
-      return res.status(400).json({
-        success: false,
-        error: "ID de prodcuto inválido. Debe ser un número.",
-      });
-    }
-    const prod = await productManager.getProductById(productId);
-    res.status(200).json({ success: true, prod });
-  } catch (e) {
-    //Vemos si el error es de route o managers
-    if (e.message && e.message.includes("no encontrado")) {
-      res.status(404).json({
-        success: false,
-        error: e.message,
-      });
+    const prod = await productManager.getProductById(pid);
+    if (prod) {
+      res.status(200).json({ success: true, product:prod });
     } else {
-      res.status(500).json({ success: false, error: e.message });
+      res.status(404).json({ success: false, error: "Producto no encontrado" });
     }
+  } catch (e) {
+    res.status(500).json({ success: false, error: e.message });
   }
 });
-
+// Crear nuevo producto
 router.post("/", async (req, res) => {
-  const { title, price, stock, code, category, description , status,  thumbnails} = req.body;
-
-  if (!title || !price || !stock || !code || !category || !description || !status || !thumbnails) {
-    return res.status(400).json({
-      success: false,
-      error: "El cuerpo de la petición debe contener att correctos",
-    });
-  }
-  const newProd = await productManager.addProduct(
-    title,
-    description,
-    price,
-    category,
-    code,
-    stock, 
-    status,
-    thumbnails
-  );
   try {
+    const {
+      title,
+      price,
+      stock,
+      code,
+      category,
+      description,
+      status,
+      thumbnails,
+    } = req.body;
+
+    if (
+      !title ||
+      !price ||
+      !stock ||
+      !code ||
+      !category ||
+      !description ||
+      !status ||
+      !thumbnails
+    ) {
+      return res.status(400).json({
+        success: false,
+        error: "El cuerpo de la petición debe contener att correctos",
+      });
+    }
+    const newProd = await productManager.addProduct(
+      title,
+      description,
+      price,
+      category,
+      code,
+      stock,
+      status,
+      thumbnails
+    );
+
     res.status(201).json({ success: true, producto: newProd });
   } catch (e) {
     if (e.message && e.message.includes("no encontrado")) {

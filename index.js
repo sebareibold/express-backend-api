@@ -1,4 +1,4 @@
-const http = require("./src/server.js");
+const http = require("./src/server");
 const PORT = 8080; //Se usa comunmente el puerto 8080 en produccion
 
 async function main() {

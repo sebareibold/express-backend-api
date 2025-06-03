@@ -1,4 +1,4 @@
-const fs = require("fs").promises; // Usamos promesas de fs para trabajar con async/await
+const fs = require("fs").promises; 
 const path = require("path");
 
 class CartsManager {
