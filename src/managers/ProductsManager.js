@@ -5,9 +5,6 @@ const socketService = require("../services/socket.service");
 
 class ProductsManager {
   constructor() {
-    this.filePath = "";
-    this.products = [];
-    this.nextId = 0;
   }
 
   async init() {
@@ -42,7 +39,9 @@ class ProductsManager {
         !status
       )
     ) {
-      if (this.products.some((p) => p.code !== code)) {
+      const existingProduct = await ProductsScheme.findOne({ code: code });
+
+      if (!existingProduct) {
         const id = this.nextId;
         this.nextId++;
         const productData = {
@@ -73,6 +72,8 @@ class ProductsManager {
         socketService.emitProductUpdate(allProducts);
 
         return saveProducts;
+      } else {
+        throw new Error("Error: Todos los campos son requeridos");
       }
     } else {
       console.log("Error: Algun campo no fue dado correctamente");
@@ -92,6 +93,7 @@ class ProductsManager {
 
   async getProductById(id) {
     try {
+
       // Verificar si el ID es un ObjectId válido de MongoDB
       if (!mongoose.Types.ObjectId.isValid(id)) {
         console.log("Error: ID de producto inválido");
@@ -162,7 +164,7 @@ class ProductsManager {
       return 0;
     }
   }
-  
+
   async deleteProduct(id) {
     try {
       // Verificar si el ID es válido

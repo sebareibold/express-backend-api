@@ -5,7 +5,7 @@ const productManager = require("../managers/ProductsManager");
 // Obtener todos los productos
 router.get("/", async (req, res) => {
   try {
-    const products = productManager.getProducts();
+    const products = await productManager.getProducts();
 
     res.status(200).json({ success: true, products });
   } catch (e) {
@@ -19,7 +19,7 @@ router.get("/:pid", async (req, res) => {
     const pid = req.params.pid;
     const prod = await productManager.getProductById(pid);
     if (prod) {
-      res.status(200).json({ success: true, product:prod });
+      res.status(200).json({ success: true, product: prod });
     } else {
       res.status(404).json({ success: false, error: "Producto no encontrado" });
     }

@@ -1,102 +1,131 @@
-const fs = require("fs").promises; 
-const path = require("path");
+const mongoose = require("mongoose")
+const CartSchema = require("../models/CartSchema")
+const socketService = require("../services/socket.service")
 
 class CartsManager {
-  constructor() {
-    this.filePath = "";
-    this.carts = [];
-    this.nextId = 1;
-  }
+  constructor() {}
 
   async init() {
     try {
-      this.filePath = path.join(__dirname, "..", "db", "carts.json");
-      const data = await fs.readFile(this.filePath, "utf8");
-      this.carts = JSON.parse(data);
-      const lastCart = this.carts[this.carts.length - 1];
-      this.nextId = lastCart ? lastCart.id + 1 : 1;
+      console.log("ProductsManager inicializado para MongoDB")
     } catch (error) {
-      console.error("Error al leer el archivo de carts:", error.message);
-      this.carts = [];
+      console.error("Error al leer el archivo de carts:", error.message)
+      //this.carts = [];
     }
   }
 
-  async saveCarts() {
+  async getCarts() {
     try {
-      const data = JSON.stringify(this.carts);
-      await fs.writeFile(this.filePath, data, "utf8");
-      console.log("Se actualizado la base de datos (carts.json )");
-    } catch (e) {
-      console.log("Error al guardar los carritos");
+      const carts = await CartSchema.find()
+      return carts
+    } catch (error) {
+      console.error("Error al obtener cart:", error.message)
+      return []
     }
   }
 
-  getCarts() {
-    return this.carts;
-  }
+  async getCart(id) {
+    try {
+      if (!mongoose.Types.ObjectId.isValid(id)) {
+        console.log("Error: ID de cart inválido")
+        return null
+      }
+      const cart = await CartSchema.findById(id) // Cambiar find por findById
 
-  getCart(id) {
-    const specificCart = this.carts.find((cart) => cart.id === id);
-    return specificCart;
+      if (cart) {
+        console.log("Éxito: Cart encontrado")
+      } else {
+        console.log("Error: Cart no encontrado")
+      }
+      return cart
+    } catch (error) {
+      console.error("Error al buscar Cart por ID:", error.message)
+      return null
+    }
   }
 
   async addCart(products) {
-    let newCart;
-    if (products.length !== 0) {
-      const id = this.nextId;
-      this.nextId++;
-      newCart = { id, products };
-      this.carts.push(newCart);
-      await this.saveCarts();
-      console.log("Carrito Añadido");
-    } else {
-      console.log("Error");
+    try {
+      // Verificamos q no este vacio
+      if (!products || products.length == 0) {
+        throw new Error(`Carrito Vacio`)
+      }
+      //Creamos el esquema con los datos, y lo guardamos en la col.
+      const newCart = new CartSchema({ products: products }) // Pasar como objeto con propiedad products
+      const saveCart = await newCart.save()
+
+      console.log("Cart añadido:", newCart)
+
+      return saveCart
+    } catch (error) {
+      console.error("Error", error.message)
+      throw error // Re-lanzar el error para que sea manejado por la ruta
     }
-    return newCart;
   }
 
   async deleteCart(id) {
-    let exito = 0;
-    const cartIndex = this.carts.findIndex((cart) => cart.id == id);
-    if (cartIndex !== -1) {
-      this.carts.splice(cartIndex, 1);
-      await this.saveCarts();
-      exito = 1;
-      console.log(`Carrito con ID ${id} eliminado.`);
-    } else {
-      console.log(`Error: Carrito con ID ${id} no encontrado`);
+    try {
+      // Verificar si el ID es válido
+      if (!mongoose.Types.ObjectId.isValid(id)) {
+        console.log("Error: ID de Cart inválido")
+        return 0
+      }
+      const deleteCart = await CartSchema.findByIdAndDelete(id)
+      if (deleteCart) {
+        console.log(`Cart con ID ${id} eliminado.`)
+      } else {
+        console.log(`ERROR: Cart con ID ${id} NO eliminado.`)
+      }
+    } catch (error) {
+      console.error("Error al eliminar cart:", error.message)
     }
-    return exito;
   }
 
-  async updateCart(id, productId, quantity) {
-    if (typeof quantity !== 'number' || quantity <= 0) {
-      console.error("Error en los parámetros: id, productId deben ser números, quantity debe ser un número positivo.");
-      return false;
+  async updateCart(cartId, productId, quantity) {
+    try {
+      // Validaciones
+      if (!mongoose.Types.ObjectId.isValid(cartId) || !mongoose.Types.ObjectId.isValid(productId)) {
+        console.error("Error: IDs inválidos.")
+        return false
+      }
+
+      if (typeof quantity !== "number" || quantity <= 0) {
+        console.error("Error: La cantidad debe ser un número positivo.")
+        return false
+      }
+
+      // Buscar el carrito por ID
+      const cart = await CartSchema.findById(cartId)
+      if (!cart) {
+        console.log(`Error: Carrito con ID ${cartId} no encontrado.`)
+        return false
+      }
+
+      // Buscar si el producto ya existe en el carrito
+      const productIndex = cart.products.findIndex((item) => item.productId.toString() === productId)
+
+      if (productIndex === -1) {
+        // Si no existe, agregarlo
+        cart.products.push({ productId, quantity })
+        console.log(`Producto ${productId} añadido al carrito ${cartId}. Cantidad: ${quantity}`)
+      } else {
+        // Si ya existe, actualizar la cantidad
+        cart.products[productIndex].quantity += quantity
+        console.log(
+          `Cantidad del producto ${productId} actualizada en el carrito ${cartId}. Nueva cantidad: ${cart.products[productIndex].quantity}`,
+        )
+      }
+
+      // Guardar los cambios
+      await cart.save()
+
+      return true
+    } catch (error) {
+      console.error("Error al actualizar el carrito:", error.message)
+      return false
     }
-
-    const cartIndex = this.carts.findIndex((cart) => cart.id === id);
-    if (cartIndex === -1) {
-      console.log(`Error: Carrito con ID ${id} no encontrado.`);
-      return false; 
-    }
-
-    const cart = this.carts[cartIndex];productId
-    const productIndex = cart.products.findIndex((item) => item.productId === productId);
-
-    if (productIndex === -1) {
-      cart.products.push({ productId: productId, quantity: quantity });
-      console.log(`Producto ${productId} añadido al carrito ${id}. Cantidad: ${quantity}`);
-    } else {
-      cart.products[productIndex].quantity += quantity;
-      console.log(`Cantidad del producto ${productId} actualizada en el carrito ${id}. Nueva cantidad: ${cart.products[productIndex].quantity}`);
-    }
-
-    await this.saveCarts();
-
-    return true; 
   }
 }
 
-const cartsManager = new CartsManager();
-module.exports = cartsManager;
+const cartsManager = new CartsManager()
+module.exports = cartsManager

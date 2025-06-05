@@ -70,6 +70,7 @@ const connectToMongoDB = async () => {
       socketTimeoutMS: 45000, // Tiempo de espera para operaciones de socket
     })
     console.log("✅ Conectado exitosamente a MongoDB Atlas");
+    
   } catch (error) {
     console.error("❌ Error al conectar a MongoDB Atlas:", error);
 

@@ -1,138 +1,130 @@
-const express = require("express");
-const router = express.Router();
+const express = require("express")
+const router = express.Router()
+const mongoose = require("mongoose")
 
-const cartsManager = require("../managers/CartsManager");
+const cartsManager = require("../managers/CartsManager")
 
 // Rutas relacionadas a Carritos
 router.get("/", async (req, res) => {
   try {
-    const carts = cartsManager.getCarts();
+    const carts = cartsManager.getCarts()
 
-    res.status(200).json({ success: true, carts });
+    res.status(200).json({ success: true, carts })
   } catch (e) {
-    res.status(500).json({ success: false, error: e.message });
+    res.status(500).json({ success: false, error: e.message })
   }
-});
+})
 
 router.get("/:cid", async (req, res) => {
   try {
-    const cid = req.params.cid;
-    const cartId = parseInt(cid);
+    const cid = req.params.cid
 
-    // Validacion (Fail-Fast)
-    if (isNaN(cartId)) {
+    // Validacion usando ObjectId en lugar de parseInt
+    if (!mongoose.Types.ObjectId.isValid(cid)) {
       return res.status(400).json({
         success: false,
-        error: "ID de carrito inválido. Debe ser un número.",
-      });
+        error: "ID de carrito inválido.",
+      })
     }
-    const cart = await cartsManager.getCart(cartId);
-    res.status(200).json({ success: true, cart });
-  } catch (e) {
-    if (e.message && e.message.includes("no encontrado")) {
-      res.status(404).json({
+
+    const cart = await cartsManager.getCart(cid)
+
+    if (!cart) {
+      return res.status(404).json({
         success: false,
-        error: e.message,
-      });
-    } else {
-      res.status(500).json({ success: false, error: e.message });
+        error: "Carrito no encontrado",
+      })
     }
+
+    res.status(200).json({ success: true, cart })
+  } catch (e) {
+    res.status(500).json({ success: false, error: e.message })
   }
-});
+})
 
 router.post("/", async (req, res) => {
   try {
-    const { products } = req.body;
+    const { products } = req.body
 
     if (!products || !Array.isArray(products)) {
       return res.status(400).json({
         success: false,
         error: "El cuerpo de la petición debe contener un array 'products'.",
-      });
+      })
     }
-    const newCart = await cartsManager.addCart(products);
-    res.status(201).json({ success: true, cart: newCart });
+    const newCart = await cartsManager.addCart(products)
+    res.status(201).json({ success: true, cart: newCart })
   } catch (e) {
-    res.status(500).json({ success: false, error: e.message });
+    res.status(500).json({ success: false, error: e.message })
   }
-});
-
+})
 
 router.post("/:cid/product/:pid", async (req, res) => {
-  const cid = req.params.cid;  
-  const cartId = parseInt(cid);  
-
-  const pid = req.params.pid;
-  const prodId = parseInt(pid);
-
-  const { quantity } = req.body;
+  const cid = req.params.cid
+  const pid = req.params.pid
+  const { quantity } = req.body
 
   try {
-    if (isNaN(cartId) || cartId === "") {
+    // Validar ObjectIds
+    if (!mongoose.Types.ObjectId.isValid(cid)) {
       return res.status(400).json({
         success: false,
-        error: "ID de carrito inválido o faltante en los parámetros.",
-      });
+        error: "ID de carrito inválido.",
+      })
     }
 
-    if (isNaN(prodId) || prodId === "") {
+    if (!mongoose.Types.ObjectId.isValid(pid)) {
       return res.status(400).json({
         success: false,
-        error: "ID de producto inválido o faltante en los parámetros.",
-      });
+        error: "ID de producto inválido.",
+      })
     }
 
-    if (
-      quantity === undefined ||
-      typeof quantity !== "number" ||
-      quantity <= 0
-    ) {
+    if (quantity === undefined || typeof quantity !== "number" || quantity <= 0) {
       return res.status(400).json({
         success: false,
-        error:
-          "El cuerpo de la petición debe contener 'quantity' como un número positivo.",
-      });
+        error: "El cuerpo de la petición debe contener 'quantity' como un número positivo.",
+      })
     }
-    await cartsManager.updateCart(cartId, prodId, quantity);
-    res.status(200).json({
-      success: true,
-      message: "Producto agregado al carrito exitosamente.",
-    });
 
+    const result = await cartsManager.updateCart(cid, pid, quantity)
+
+    if (result) {
+      res.status(200).json({
+        success: true,
+        message: "Producto agregado al carrito exitosamente.",
+      })
+    } else {
+      res.status(400).json({
+        success: false,
+        error: "No se pudo agregar el producto al carrito.",
+      })
+    }
   } catch (e) {
-    console.error("Error en POST /api/carts/:cid/product/:pid:", e);
+    console.error("Error en POST /api/carts/:cid/product/:pid:", e)
     res.status(500).json({
       success: false,
       error: "Error interno del servidor al agregar el producto al carrito.",
-    });
+    })
   }
-});
+})
 
 router.delete("/:cid", async (req, res) => {
   try {
-    const cid = req.params.cid;
-    const cartId = parseInt(cid);
+    const cid = req.params.cid
 
-    if (isNaN(cartId)) {
+    if (!mongoose.Types.ObjectId.isValid(cid)) {
       return res.status(400).json({
         success: false,
-        error: "ID de carrito inválido. Debe ser un número.",
-      });
+        error: "ID de carrito inválido.",
+      })
     }
-    await cartsManager.deleteCart(cartId);
 
-    res
-      .status(200)
-      .json({ success: true, message: `Carrito con ID ${cartId} eliminado.` });
+    await cartsManager.deleteCart(cid)
+
+    res.status(200).json({ success: true, message: `Carrito con ID ${cid} eliminado.` })
   } catch (e) {
-    if (e.message && e.message.includes("no encontrado")) {
-      res.status(404).json({
-        success: false,
-        error: e.message,
-      });
-    } else {
-      res.status(500).json({ success: false, error: e.message });
-    }
+    res.status(500).json({ success: false, error: e.message })
   }
-});
-module.exports = router;
+})
+module.exports = router
