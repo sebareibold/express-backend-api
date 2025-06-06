@@ -4,8 +4,7 @@ const ProductsScheme = require("../models/ProductSchema");
 const socketService = require("../services/socket.service");
 
 class ProductsManager {
-  constructor() {
-  }
+  constructor() {}
 
   async init() {
     try {
@@ -80,20 +79,64 @@ class ProductsManager {
     }
     return newProduct;
   }
-
-  async getProducts() {
+  
+  async getProducts(limit, page, sort, query) {
     try {
-      const products = await ProductsScheme.find();
+      let skip = page && limit ? (page - 1) * limit : 0;
+      let dbQuery = {};
+      let sortOptions = {};
+      console.log(query);
+      // Construimos dbQuery con campos específicos
+      if (query) {
+        const allowedFields = [
+          "category",
+          "code",
+          "stock",
+          "status",
+          "price",
+          "title",
+          "description",
+        ];
+        for (const field of allowedFields) {
+          if (query[field] !== undefined) {
+            // Buscar parcial si es string
+            if (typeof query[field] === "string") {
+              dbQuery[field] = { $regex: query[field], $options: "i" };
+            } else {
+              dbQuery[field] = query[field];
+            }
+          }
+        }
+      }
+
+      // Procesamiento de ordenamiento
+      if (sort) {
+        const [field, order] = sort.split(":");
+        if (field) {
+          sortOptions[field] = order === "desc" ? -1 : 1;
+        }
+      }
+
+      // Construcción de la consulta
+      let productsQuery = ProductsScheme.find(dbQuery);
+
+      if (Object.keys(sortOptions).length > 0) {
+        productsQuery = productsQuery.sort(sortOptions);
+      }
+
+      if (limit) productsQuery = productsQuery.limit(limit);
+      if (skip) productsQuery = productsQuery.skip(skip);
+
+      const products = await productsQuery.exec();
       return products;
     } catch (error) {
       console.error("Error al obtener productos:", error.message);
-      return [];
+      throw error;
     }
   }
 
   async getProductById(id) {
     try {
-
       // Verificar si el ID es un ObjectId válido de MongoDB
       if (!mongoose.Types.ObjectId.isValid(id)) {
         console.log("Error: ID de producto inválido");
