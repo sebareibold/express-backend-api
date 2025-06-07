@@ -150,7 +150,7 @@ npm start
 ## Uso de la API
 
 ### Ejemplos de consultas con filtros:
-````bash
+```bash
 # Obtener productos con paginación
 GET /api/products?page=1&limit=10
 
@@ -162,6 +162,7 @@ GET /api/products?sort=price:asc
 
 # Combinar filtros
 GET /api/products?category=electronics&sort=price:desc&limit=5
+
 ```
 
 ### Gestión de carritos:
@@ -173,7 +174,7 @@ Body: { "products": [] }
 # Agregar producto al carrito
 POST /api/carts/:cid/product/:pid
 Body: { "quantity": 2 }
-```
+``` 
 
 ## Estado del Proyecto
 
