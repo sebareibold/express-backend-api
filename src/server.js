@@ -53,20 +53,25 @@ app.use(express.static(path.join(__dirname, "public")));
 
 app.get("/", async (req, res) => {
   try {
-    const page = Number.parseInt(req.query.page) || 1 // pagina por defecto es 1
-    const limit = Number.parseInt(req.query.limit) || 6 // Limite por defecto
+    const page = Number.parseInt(req.query.page) || 1; // pagina por defecto es 1
+    const limit = Number.parseInt(req.query.limit) || 6; // Limite por defecto
 
     if (page < 1 || limit < 1) {
-      return res.status(400).send("Parámetros de página o límite inválidos.")
+      return res.status(400).send("Parámetros de página o límite inválidos.");
     }
 
     // Obtener productos Paginados y el total de items
-    const productsFromDB = await productManager.getProducts(limit, page, undefined, undefined)
+    const productsFromDB = await productManager.getProducts(
+      limit,
+      page,
+      undefined,
+      undefined
+    );
 
     // Convertimos de Documentos de MongoDB a objetos plantos, ya que en si Handlebars no logra acceder a los documentos de MongoDB
     const products = productsFromDB
       ? productsFromDB.map((product) => {
-          const plainProduct = product.toObject ? product.toObject() : product
+          const plainProduct = product.toObject ? product.toObject() : product;
           return {
             _id: plainProduct._id,
             title: plainProduct.title,
@@ -77,25 +82,24 @@ app.get("/", async (req, res) => {
             stock: plainProduct.stock,
             status: plainProduct.status,
             thumbnails: plainProduct.thumbnails,
-          }
+          };
         })
-      : []
-
+      : [];
 
     // Calcular datos de paginaciin adicionales
-    const totalPages = 4
-    const prevPage = page > 1 ? page - 1 : null // null si es la primera página
-    const nextPage = page < totalPages ? page + 1 : null // null si es la última página
-    const isFirstPage = page === 1
-    const isLastPage = page === totalPages
+    const totalPages = 4;
+    const prevPage = page > 1 ? page - 1 : null; // null si es la primera página
+    const nextPage = page < totalPages ? page + 1 : null; // null si es la última página
+    const isFirstPage = page === 1;
+    const isLastPage = page === totalPages;
 
     // Generar array para los numeros de pagina
-    const pagesArray = []
+    const pagesArray = [];
     for (let i = 1; i <= totalPages; i++) {
       pagesArray.push({
         number: i,
         isCurrent: i === page,
-      })
+      });
     }
 
     // Renderizar el template pasando los datos necesarios
@@ -108,19 +112,26 @@ app.get("/", async (req, res) => {
       isFirstPage,
       isLastPage,
       pagesArray,
-    })
+    });
   } catch (error) {
-    console.error("Error al obtener productos paginados:", error)
-    res.status(500).send("Error interno del servidor")
+    console.error("Error al obtener productos paginados:", error);
+    res.status(500).send("Error interno del servidor");
   }
-})
+});
 
 //----------------------------- Ruta "Real Time Products" con Handlebars -------------------------------
+//----------------------------- Ruta "Real Time Products" con Handlebars -------------------------------
 app.get("/realtimeproducts", async (req, res) => {
-  const products = productManager.getProducts();
-  //console.log(products);
-  res.render("realTimeProducts.hbs", { products: products });
-});
+  try {
+    res.render("realTimeProducts.hbs", {
+      products: [], // Vacío inicialmente
+      title: "Productos en Tiempo Real",
+    })
+  } catch (error) {
+    console.error("Error al renderizar realTimeProducts:", error)
+    res.render("realTimeProducts.hbs", { products: [] })
+  }
+})
 
 // ------------------------------ Configuracion de Mongoose ---------------------------------
 const connectToMongoDB = async () => {
@@ -137,6 +148,5 @@ const connectToMongoDB = async () => {
   }
 };
 
-
-connectToMongoDB()
+connectToMongoDB();
 module.exports = http;

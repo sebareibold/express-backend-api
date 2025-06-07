@@ -194,6 +194,7 @@ class ProductsManager {
 
       if (updatedProduct) {
         console.log("Producto actualizado:", updatedProduct);
+        
         // Emitir actualización por WebSocket
         const allProducts = await this.getProducts();
         socketService.emitProductUpdate(allProducts);

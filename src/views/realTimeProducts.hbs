@@ -1,8 +1,10 @@
 <div class="container-info" id="productList">
-  <h1> Lista de Productos de la Base de Datos</h1>
+  <h1>Lista de Productos de la Base de Datos</h1>
+  
+  <!-- Mostrar productos iniciales -->
   {{#each products}}
     <div class="product-item">
-      <p>Id: {{id}}</p>
+      <p>Id: {{_id}}</p>
       <p>Título: {{title}}</p>
       <p>Descripción: {{description}}</p>
       <p>Precio: ${{price}}</p>
@@ -12,7 +14,22 @@
       <hr />
     </div>
   {{/each}}
+  
+  {{#unless products}}
+    <p>No hay productos disponibles</p>
+  {{/unless}}
 </div>
 
+<!-- Cargar Socket.IO desde CDN como fallback y luego el cliente local -->
 <script src="/socket.io/socket.io.js"></script>
+<script>
+  // Verificar que Socket.IO se cargó correctamente
+  if (typeof io === 'undefined') {
+    console.error('Socket.IO no se cargó correctamente');
+    // Cargar desde CDN como fallback
+    const script = document.createElement('script');
+    script.src = 'https://cdn.socket.io/4.7.4/socket.io.min.js';
+    document.head.appendChild(script);
+  }
+</script>
 <script src="/js/socket-client.js"></script>

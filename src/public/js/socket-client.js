@@ -1,8 +1,7 @@
-// Importar la biblioteca Socket.IO
-const io = require("socket.io-client")
+// ✅ CORRECTO: Socket.IO ya está cargado desde el script anterior
 
-// Cliente de WebSockets para la actualización en tiempo real de productos
-const socket = io()
+const io = window.io // Declare the io variable
+const socket = io() // Esto conecta automáticamente al servidor
 
 // Función para actualizar la lista de productos en la UI
 function updateProductList(products) {
@@ -11,13 +10,20 @@ function updateProductList(products) {
   const container = document.getElementById("productList")
   if (!container) return
 
-  container.innerHTML = "<h1> Lista de Productos de la Base de Datos</h1>"
+  // Limpiar contenido anterior pero mantener el título
+  container.innerHTML = "<h1>Lista de Productos de la Base de Datos (Tiempo Real)</h1>"
+
+  // Si no hay productos
+  if (!products || products.length === 0) {
+    container.innerHTML += "<p>No hay productos disponibles</p>"
+    return
+  }
 
   // Agregar productos dinámicamente
   products.forEach((product) => {
     container.innerHTML += `
       <div class="product-item">
-        <p>Id: ${product.id}</p>
+        <p>Id: ${product._id}</p>
         <p>Título: ${product.title}</p>
         <p>Descripción: ${product.description}</p>
         <p>Precio: $${product.price}</p>
@@ -33,4 +39,21 @@ function updateProductList(products) {
 // Escuchar eventos de actualización de productos
 socket.on("productListUpdate", updateProductList)
 
+// Eventos de conexión para debugging
+socket.on("connect", () => {
+  console.log("✅ Conectado al servidor WebSocket")
+  console.log("Socket ID:", socket.id)
+})
 
+socket.on("disconnect", () => {
+  console.log("❌ Desconectado del servidor WebSocket")
+})
+
+socket.on("connect_error", (error) => {
+  console.error("❌ Error de conexión WebSocket:", error)
+})
+
+// Evento para manejar errores del servidor
+socket.on("error", (errorData) => {
+  console.error("❌ Error del servidor:", errorData)
+})
