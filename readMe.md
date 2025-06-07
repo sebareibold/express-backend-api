@@ -57,7 +57,7 @@ Además, se incorporó un endpoint denominado realTimeProducts, que permite visu
 
 ## Estructura del Proyecto
 
-\`\`\`
+```
 apirest-practice/
 ├── .env                    # Variables de entorno
 ├── .gitignore             # Archivos ignorados por Git
@@ -84,7 +84,7 @@ apirest-practice/
     │   ├── css/
     │   └── js/
     └── server.js          # Configuración del servidor
-\`\`\`
+```
 
 ## API Endpoints
 
@@ -117,29 +117,29 @@ Asegúrate de tener instalado lo siguiente en tu sistema:
 ## Configuración e Instalación
 
 ### 1. Clona el repositorio:
-\`\`\`bash
+```bash
 git clone https://github.com/sebareibold/apirest-practice.git
 cd apirest-practice
-\`\`\`
+```
 
 ### 2. Instala las dependencias:
-\`\`\`bash
+```bash
 npm install
-\`\`\`
+```
 
 ### 3. Configura las variables de entorno:
 Crea un archivo `.env` en la raíz del proyecto:
-\`\`\`env
+```env
 MONGODB_URI=mongodb://localhost:27017/tu-base-de-datos
 # O para MongoDB Atlas:
 # MONGODB_URI=mongodb+srv://usuario:password@cluster.mongodb.net/database
 PORT=8080
-\`\`\`
+```
 
 ### 4. Inicia el servidor:
-\`\`\`bash
+```bash
 npm start
-\`\`\`
+```
 
 ### 5. Accede a la aplicación:
 - **Interfaz web**: http://localhost:8080
@@ -150,7 +150,7 @@ npm start
 ## Uso de la API
 
 ### Ejemplos de consultas con filtros:
-\`\`\`bash
+````bash
 # Obtener productos con paginación
 GET /api/products?page=1&limit=10
 
@@ -162,10 +162,10 @@ GET /api/products?sort=price:asc
 
 # Combinar filtros
 GET /api/products?category=electronics&sort=price:desc&limit=5
-\`\`\`
+```
 
 ### Gestión de carritos:
-\`\`\`bash
+```bash
 # Crear carrito
 POST /api/carts
 Body: { "products": [] }
@@ -173,7 +173,7 @@ Body: { "products": [] }
 # Agregar producto al carrito
 POST /api/carts/:cid/product/:pid
 Body: { "quantity": 2 }
-\`\`\`
+```
 
 ## Estado del Proyecto
 
