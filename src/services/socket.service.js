@@ -7,7 +7,7 @@ class SocketService {
   // Inicializar el servicio con la instancia de Socket.io
   init(io) {
     if (this.io) {
-      console.log("Socket service ya fue inicializado")
+      console.log("✅  Socket service ya fue inicializado")
       return
     }
 
@@ -22,7 +22,7 @@ class SocketService {
       })
     })
 
-    console.log("Socket service inicializado correctamente")
+    console.log("✅ Socket Service inicializado Exitosamente!")
   }
 
   // Método para emitir actualizaciones de productos

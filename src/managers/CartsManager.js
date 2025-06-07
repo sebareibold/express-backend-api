@@ -7,9 +7,9 @@ class CartsManager {
 
   async init() {
     try {
-      console.log("ProductsManager inicializado para MongoDB");
+      console.log("✅ CartsManager Inicializado Exitosamente!");
     } catch (error) {
-      console.error("Error al leer el archivo de carts:", error.message);
+      console.error("❌ Error al leer el archivo de carts:", error.message);
       //this.carts = [];
     }
   }
@@ -46,20 +46,17 @@ class CartsManager {
 
   async addCart(products) {
     try {
-      // Verificamos q no este vacio
-      if (!products || products.length == 0) {
-        throw new Error(`Carrito Vacio`);
-      }
+
       //Creamos el esquema con los datos, y lo guardamos en la col.
       const newCart = new CartSchema({ products: products }); // Pasar como objeto con propiedad products
       const saveCart = await newCart.save();
 
-      console.log("Cart añadido:", newCart);
+      //console.log("Cart añadido:", newCart);
 
       return saveCart;
     } catch (error) {
       console.error("Error", error.message);
-      throw error; // Re-lanzar el error para que sea manejado por la ruta
+      throw error; 
     }
   }
 

@@ -32,3 +32,5 @@ function updateProductList(products) {
 
 // Escuchar eventos de actualización de productos
 socket.on("productListUpdate", updateProductList)
+
+

@@ -8,9 +8,9 @@ class ProductsManager {
 
   async init() {
     try {
-      console.log("ProductsManager inicializado para MongoDB");
+      console.log("✅ ProductsManager Inicializado Exitosamente!");
     } catch (error) {
-      console.error("Error al leer el archivo de productos:", error.message);
+      console.error("❌  Error al leer el archivo de productos:", error.message);
       //this.products = [] // fallback por si el archivo está vacío o no existe
     }
   }

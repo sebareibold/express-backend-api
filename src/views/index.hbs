@@ -1,29 +1,320 @@
 <div class="container-info">
-  <h2>Bienvenido al Inicio </h2>
-  <hr />
-  <p>Estas son las rutas disponibles para explicarar en nuestra APIRest</p>
-  <div>
-    <p>Para obtener todos los productos.</p>
-    <div class="container-ruta green">
-      <a class="ruta"  href="http://localhost:8080/api/products">http://localhost:8080/api/products</a>.
-    </div>
-    <p>Tambien pueden realizar PUT, PUSH, DELETE y GET ONE.</p>
-  </div>
+    <h2>🛍️ Catálogo de Productos</h2>
+    <hr />
 
-  <div>
-    <p>Para obtener todos los carritos</p>
-    <div class="container-ruta yellow">
-      <a class="ruta"  href="http://localhost:8080/api/carts">http://localhost:8080/api/carts</a>.
-    </div>
-    <p>Tambien pueden realizar PUT, PUSH, DELETE y GET ONE.</p>
+    <!-- Sección del Carrito -->
+    <div id="cart-section" style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 30px;">
+        <h3>🛒 Mi Carrito</h3>
+        <div id="cart-items">
+            <p>Tu carrito está vacío</p>
+        </div>
+        <div id="cart-total" style="font-weight: bold; margin-top: 15px;">
+            Total: $0.00
+        </div>
+        <button id="clear-cart-btn" onclick="clearCart()" style="background: #dc3545; color: white; border: none; padding: 8px 16px; border-radius: 4px; margin-top: 10px; cursor: pointer;">
+            Vaciar Carrito
+        </button>
 
-  </div>
-
-  <div>
-    <p>Para visualizar nuestro productos en tiempo real ante cualquiera
-      modifiacion.</p>
-    <div class="container-ruta blue">
-      <a class="ruta"  href="http://localhost:8080/realTimeProducts">http://localhost:8080/realTimeProducts</a>.
     </div>
-  </div>
+      
+    {{#if products}}
+        <div class="products-grid">
+            {{#each products}}
+            <div class="product-card">
+                {{#if thumbnails}}
+                    <img src="{{thumbnails.[0]}}" alt="{{title}}" class="product-image">
+                {{else}}
+                    <div class="product-image-placeholder">
+                        📦 Sin imagen disponible
+                    </div>
+                {{/if}}
+                
+                <h3 class="product-title">{{title}}</h3>
+                
+                {{#if category}}
+                    <span class="product-category">{{category}}</span>
+                {{/if}}
+                
+                {{#if description}}
+                    <p class="product-description">{{this.description}}</p>
+                {{/if}}
+                
+                <div class="product-details">
+                    <div class="product-price">${{this.price}}</div>
+                    
+                    {{#if stock}}
+                        <div class="product-stock">
+                            📦 Stock disponible: {{stock}} unidades
+                        </div>
+                    {{/if}}
+                    
+                    {{#if code}}
+                        <div class="product-stock">
+                            🏷️ Código: {{code}}
+                        </div>
+                    {{/if}}
+                </div>
+                
+                <button class="add-to-cart-btn" onclick="addToCart('{{_id}}', '{{title}}', {{price}})">
+                    🛒 Agregar al Carrito
+                </button>
+            </div>
+            {{/each}}
+        </div>
+
+        <!-- Paginación -->
+        <div class="pagination">
+            <button class="pagination-btn" onclick="changePage({{prevPage}})" {{#if isFirstPage}}disabled{{/if}}>
+                « Anterior
+            </button>
+            
+            <div class="pagination-numbers">
+                {{#each pagesArray}}
+                    {{#if this.isCurrent}}
+                        <span class="pagination-number current">{{this.number}}</span>
+                    {{else}}
+                        <button class="pagination-number" onclick="changePage({{this.number}})">{{this.number}}</button>
+                    {{/if}}
+                {{/each}}
+            </div>
+            
+            <button class="pagination-btn" onclick="changePage({{nextPage}})" {{#if isLastPage}}disabled{{/if}}>
+                Siguiente »
+            </button>
+        </div>
+        
+        <div class="pagination-info">
+            Mostrando página {{currentPage}} de {{totalPages}}
+        </div>
+    {{else}}
+        <div class="no-products">
+            <h3>No hay productos disponibles</h3>
+            <p>Vuelve más tarde para ver nuestros productos.</p>
+        </div>
+    {{/if}}
 </div>
+
+<script>
+    // Variable global para almacenar el carrito
+    let cart = JSON.parse(localStorage.getItem('cart')) || [];
+    let currentCartId = localStorage.getItem('currentCartId') || null;
+
+    // Inicializar carrito al cargar la página
+    document.addEventListener('DOMContentLoaded', function() {
+        updateCartDisplay();
+        if (!currentCartId) {
+            createNewCart();
+        }
+    });
+
+    // Crear un nuevo carrito
+    async function createNewCart() {
+        try {
+            const response = await fetch('/api/carts', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ products: [] })
+            });
+            
+            const data = await response.json();
+            if (data.success) {
+                currentCartId = data.cart._id;
+                localStorage.setItem('currentCartId', currentCartId);
+                console.log('Nuevo carrito creado:', currentCartId);
+            }
+        } catch (error) {
+            console.error('Error al crear carrito:', error);
+        }
+    }
+
+    // Agregar producto al carrito
+    async function addToCart(productId, productTitle, productPrice) {
+        if (!currentCartId) {
+            await createNewCart();
+        }
+
+        try {
+            const response = await fetch(`/api/carts/${currentCartId}/product/${productId}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ quantity: 1 })
+            });
+            
+            const data = await response.json();
+            if (data.success) {
+                // Actualizar carrito local
+                const existingItem = cart.find(item => item.productId === productId);
+                if (existingItem) {
+                    existingItem.quantity += 1;
+                } else {
+                    cart.push({
+                        productId: productId,
+                        title: productTitle,
+                        price: productPrice,
+                        quantity: 1
+                    });
+                }
+                
+                localStorage.setItem('cart', JSON.stringify(cart));
+                updateCartDisplay();
+                showNotification(`✅ ${productTitle} agregado al carrito`, 'success');
+            } else {
+                showNotification('❌ Error al agregar al carrito', 'error');
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            showNotification('❌ Error al agregar al carrito', 'error');
+        }
+    }
+
+    // Actualizar la visualización del carrito
+    function updateCartDisplay() {
+        const cartItemsDiv = document.getElementById('cart-items');
+        const cartTotalDiv = document.getElementById('cart-total');
+        
+        if (cart.length === 0) {
+            cartItemsDiv.innerHTML = '<p>Tu carrito está vacío</p>';
+            cartTotalDiv.innerHTML = 'Total: $0.00';
+            return;
+        }
+
+        let cartHTML = '';
+        let total = 0;
+
+        cart.forEach((item, index) => {
+            const itemTotal = item.price * item.quantity;
+            total += itemTotal;
+            
+            cartHTML += `
+                <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px; border-bottom: 1px solid #ddd;">
+                    <div>
+                        <strong>${item.title}</strong><br>
+                        $${item.price} x ${item.quantity} = $${itemTotal.toFixed(2)}
+                    </div>
+                    <div>
+                        <button onclick="changeQuantity(${index}, -1)" style="background: #ffc107; border: none; padding: 5px 10px; margin: 0 5px; border-radius: 3px; cursor: pointer;">-</button>
+                        <span>${item.quantity}</span>
+                        <button onclick="changeQuantity(${index}, 1)" style="background: #28a745; border: none; padding: 5px 10px; margin: 0 5px; border-radius: 3px; cursor: pointer; color: white;">+</button>
+                        <button onclick="removeFromCart(${index})" style="background: #dc3545; color: white; border: none; padding: 5px 10px; margin-left: 10px; border-radius: 3px; cursor: pointer;">🗑️</button>
+                    </div>
+                </div>
+            `;
+        });
+
+        cartItemsDiv.innerHTML = cartHTML;
+        cartTotalDiv.innerHTML = `Total: $${total.toFixed(2)}`;
+    }
+
+    // Cambiar cantidad de un producto
+    async function changeQuantity(index, change) {
+        const item = cart[index];
+        const newQuantity = item.quantity + change;
+        
+        if (newQuantity <= 0) {
+            removeFromCart(index);
+            return;
+        }
+
+        try {
+            const response = await fetch(`/api/carts/${currentCartId}/products/${item.productId}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ quantity: newQuantity })
+            });
+            
+            if (response.ok) {
+                cart[index].quantity = newQuantity;
+                localStorage.setItem('cart', JSON.stringify(cart));
+                updateCartDisplay();
+            }
+        } catch (error) {
+            console.error('Error al actualizar cantidad:', error);
+        }
+    }
+
+    // Remover producto del carrito
+    async function removeFromCart(index) {
+        const item = cart[index];
+        
+        try {
+            const response = await fetch(`/api/carts/${currentCartId}/products/${item.productId}`, {
+                method: 'DELETE'
+            });
+            
+            if (response.ok) {
+                cart.splice(index, 1);
+                localStorage.setItem('cart', JSON.stringify(cart));
+                updateCartDisplay();
+                showNotification(`❌ ${item.title} eliminado del carrito`, 'success');
+            }
+        } catch (error) {
+            console.error('Error al eliminar producto:', error);
+        }
+    }
+
+    // Vaciar carrito
+    async function clearCart() {
+        if (cart.length === 0) return;
+        
+        try {
+            const response = await fetch(`/api/carts/${currentCartId}/products`, {
+                method: 'DELETE'
+            });
+            
+            if (response.ok) {
+                cart = [];
+                localStorage.setItem('cart', JSON.stringify(cart));
+                updateCartDisplay();
+                showNotification('🗑️ Carrito vaciado', 'success');
+            }
+        } catch (error) {
+            console.error('Error al vaciar carrito:', error);
+        }
+    }
+
+    // Mostrar notificaciones
+    function showNotification(message, type) {
+        const notification = document.createElement('div');
+        notification.style.cssText = `
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 15px 20px;
+            border-radius: 8px;
+            color: white;
+            font-weight: bold;
+            z-index: 1000;
+            animation: slideIn 0.3s ease;
+            ${type === 'success' ? 'background: #4CAF50;' : 'background: #f44336;'}
+        `;
+        notification.textContent = message;
+        
+        document.body.appendChild(notification);
+        
+        setTimeout(() => {
+            notification.style.animation = 'slideOut 0.3s ease';
+            setTimeout(() => {
+                if (document.body.contains(notification)) {
+                    document.body.removeChild(notification);
+                }
+            }, 300);
+        }, 3000);
+    }
+
+    // Función para cambiar de página
+    function changePage(page) {
+        if (!page) return;
+        
+        // Mostrar indicador de carga
+        document.body.classList.add('loading-page');
+        
+        // Redirigir a la nueva página
+        window.location.href = `/?page=${page}&limit=6`;
+    }
+</script>

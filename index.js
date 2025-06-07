@@ -1,26 +1,48 @@
+// Punto de entrada principal del servidor
 const http = require("./src/server");
-const PORT = 8080; //Se usa comunmente el puerto 8080 en produccion
+const productManager = require("./src//managers/ProductsManager");
+const cartsManager = require("./src//managers/CartsManager");
+const mongoose = require("mongoose");
 
-async function main() {
+// Puerto del servidor
+const PORT = process.env.PORT || 8080;
+
+// Función para inicializar el servidor
+const initializeServer = async () => {
   try {
-    const cartsManagerInstance = require("./src/managers/CartsManager.js");
-    const productsManagerInstance = require("./src/managers/ProductsManager.js");
+    // Inicializar managers
+    await productManager.init();
+    await cartsManager.init();
 
-    await cartsManagerInstance.init();
-    await productsManagerInstance.init();
-
-    console.log(
-      "CartsManager y ProductsManager inicializado correctamente. Datos cargados."
-    );
-
+    // Iniciar el servidor HTTP
     http.listen(PORT, () => {
-      console.log(`Server Escuchando en el puerto: http://localhost:${PORT}`);
+      console.log("=".repeat(50));
+
+      console.log("🚀 ¡Servidor iniciado exitosamente!");
+      console.log(`📡 Puerto: ${PORT}`);
+      console.log(`🌐 URL: http://localhost:${PORT}`);
+      console.log(`🛍️  Productos: http://localhost:${PORT}/`);
+      console.log(`⚡ Tiempo real: http://localhost:${PORT}/realtimeproducts`);
+      console.log(`📋 API Productos: http://localhost:${PORT}/api/products`);
+      console.log(`🛒 API Carritos: http://localhost:${PORT}/api/carts`);
+      console.log("=".repeat(50));
     });
-    
-  } catch (e) {
-    console.error("Error al iniciar la aplicación:", e);
+  } catch (error) {
+    console.error("❌ Error al inicializar el servidor:", error);
     process.exit(1);
   }
-}
+};
 
-main();
+// Manejar la conexión a MongoDB
+mongoose.connection.once("open", () => {
+  console.log("✅ MongoDB Conectado Exitosamente!");
+  initializeServer();
+});
+
+mongoose.connection.on("error", (error) => {
+  console.error("❌ Error de conexión a MongoDB:", error);
+});
+
+mongoose.connection.on("disconnected", () => {
+  console.log("⚠️ MongoDB desconectado");
+});
