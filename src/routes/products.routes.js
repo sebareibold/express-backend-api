@@ -18,8 +18,8 @@ router.get("/", async (req, res) => {
     } = req.query;
 
     // Validaciones
-    const finalLimit = limit && !isNaN(parseInt(limit)) ? parseInt(limit) : undefined;
-    const finalPage = page && !isNaN(parseInt(page)) ? parseInt(page) : undefined;
+    const finalLimit = limit && !isNaN(parseInt(limit)) ? parseInt(limit) : 10;
+    const finalPage = page && !isNaN(parseInt(page)) ? parseInt(page) : 1;
     const finalSort = typeof sort === "string" ? sort : undefined;
 
     // Validar parámetros numéricos individualmente
@@ -139,14 +139,14 @@ router.post("/", async (req, res) => {
 
 router.put("/:pid", async (req, res) => {
   try {
-    const pid = req.params.pid;
-    const productId = parseInt(pid);
+    const pid = req.params.pid
 
-    if (isNaN(productId)) {
+    // Verificar si el ID es un ObjectId válido de MongoDB
+    if (!mongoose.Types.ObjectId.isValid(pid)) {
       return res.status(400).json({
         success: false,
-        error: "ID de prodcuto inválido. Debe ser un número.",
-      });
+        error: "ID de producto inválido.",
+      })
     }
 
     const { valor, campo } = req.body;
@@ -167,7 +167,7 @@ router.put("/:pid", async (req, res) => {
       });
     }
 
-    const exito = await productManager.updateProduct(productId, campo, valor);
+    const exito = await productManager.updateProduct(pid, campo, valor);
     if (exito) {
       res.status(200).json({ success: true, message: "Actualizacion Exitosa" });
     } else {

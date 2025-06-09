@@ -41,10 +41,7 @@ class ProductsManager {
       const existingProduct = await ProductsScheme.findOne({ code: code });
 
       if (!existingProduct) {
-        const id = this.nextId;
-        this.nextId++;
         const productData = {
-          id,
           title,
           description,
           price,

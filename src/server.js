@@ -45,7 +45,7 @@ app.engine(
 );
 
 app.set("views", path.join(__dirname, "/views")); // Declaramos que se implementa el main desde la carpeta views
-app.set("views engine", "handlebars");
+app.set("views engine", "hbs");
 app.use(express.static(path.join(__dirname, "/views")));
 app.use(express.static(path.join(__dirname, "public")));
 
