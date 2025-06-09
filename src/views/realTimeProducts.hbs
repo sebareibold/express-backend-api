@@ -1,24 +1,86 @@
 <div class="container-info" id="productList">
-  <h1>Lista de Productos de la Base de Datos</h1>
+  <h1>Lista de Productos de la Base de Datos (Tiempo Real)</h1>
   
-  <!-- Mostrar productos iniciales -->
-  {{#each products}}
-    <div class="product-item">
-      <p>Id: {{_id}}</p>
-      <p>Título: {{title}}</p>
-      <p>Descripción: {{description}}</p>
-      <p>Precio: ${{price}}</p>
-      <p>Categoría: {{category}}</p>
-      <p>Código: {{code}}</p>
-      <p>Stock: {{stock}}</p>
-      <hr />
-    </div>
-  {{/each}}
+  <div id="connection-status" style="padding: 10px; margin-bottom: 20px; border-radius: 5px; background: #f0f0f0;">
+    🔄 Conectando...
+  </div>
   
-  {{#unless products}}
-    <p>No hay productos disponibles</p>
-  {{/unless}}
+  <div id="products-container">
+    <!-- Los productos se cargarán aquí dinámicamente -->
+    <p>Cargando productos...</p>
+  </div>
 </div>
+
+<style>
+.product-item {
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 20px;
+  margin-bottom: 15px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  transition: transform 0.2s;
+}
+
+.product-item:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+}
+
+.product-title {
+  font-size: 1.3rem;
+  font-weight: bold;
+  color: #333;
+  margin-bottom: 10px;
+}
+
+.product-price {
+  font-size: 1.2rem;
+  font-weight: bold;
+  color: #4caf50;
+  margin: 10px 0;
+}
+
+.product-category {
+  display: inline-block;
+  background: #e3f2fd;
+  color: #1976d2;
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 0.8rem;
+  margin-bottom: 10px;
+}
+
+.product-stock {
+  color: #666;
+  font-size: 0.9rem;
+}
+
+.product-code {
+  color: #888;
+  font-size: 0.8rem;
+}
+
+#connection-status.connected {
+  background: #d4edda !important;
+  color: #155724;
+  border: 1px solid #c3e6cb;
+}
+
+#connection-status.disconnected {
+  background: #f8d7da !important;
+  color: #721c24;
+  border: 1px solid #f5c6cb;
+}
+
+.no-products {
+  text-align: center;
+  padding: 40px;
+  color: #666;
+  background: #f9f9f9;
+  border-radius: 8px;
+}
+</style>
 
 <!-- Cargar Socket.IO desde CDN como fallback y luego el cliente local -->
 <script src="/socket.io/socket.io.js"></script>
@@ -32,4 +94,82 @@
     document.head.appendChild(script);
   }
 </script>
-<script src="/js/socket-client.js"></script>
+
+<script>
+const socket = io();
+const statusDiv = document.getElementById('connection-status');
+const productsContainer = document.getElementById('products-container');
+
+// Función para actualizar la lista de productos en la UI
+function updateProductList(products) {
+  console.log("Productos actualizados recibidos:", products);
+
+  if (!products || products.length === 0) {
+    productsContainer.innerHTML = `
+      <div class="no-products">
+        <h3>No hay productos disponibles</h3>
+        <p>Los productos aparecerán aquí en tiempo real cuando se agreguen a la base de datos.</p>
+      </div>
+    `;
+    return;
+  }
+
+  // Limpiar contenido anterior
+  productsContainer.innerHTML = '';
+
+  // Agregar productos dinámicamente
+  products.forEach((product) => {
+    const productDiv = document.createElement('div');
+    productDiv.className = 'product-item';
+    productDiv.innerHTML = `
+      <div class="product-title">${product.title}</div>
+      <div class="product-category">${product.category}</div>
+      <p><strong>Descripción:</strong> ${product.description}</p>
+      <div class="product-price">$${product.price}</div>
+      <div class="product-stock">📦 Stock: ${product.stock} unidades</div>
+      <div class="product-code">🏷️ Código: ${product.code}</div>
+      <p><strong>Estado:</strong> ${product.status ? 'Disponible' : 'No disponible'}</p>
+      <p><strong>ID:</strong> ${product._id}</p>
+    `;
+    productsContainer.appendChild(productDiv);
+  });
+}
+
+// Escuchar eventos de actualización de productos
+socket.on("productListUpdate", updateProductList);
+
+// Eventos de conexión
+socket.on("connect", () => {
+  console.log("✅ Conectado al servidor WebSocket");
+  console.log("Socket ID:", socket.id);
+  statusDiv.innerHTML = "✅ Conectado - Los productos se actualizarán en tiempo real";
+  statusDiv.className = "connected";
+  
+  // Solicitar productos actuales
+  socket.emit("requestProducts");
+});
+
+socket.on("disconnect", () => {
+  console.log("❌ Desconectado del servidor WebSocket");
+  statusDiv.innerHTML = "❌ Desconectado - Intentando reconectar...";
+  statusDiv.className = "disconnected";
+});
+
+socket.on("connect_error", (error) => {
+  console.error("❌ Error de conexión WebSocket:", error);
+  statusDiv.innerHTML = "❌ Error de conexión";
+  statusDiv.className = "disconnected";
+});
+
+// Evento para manejar errores del servidor
+socket.on("error", (errorData) => {
+  console.error("❌ Error del servidor:", errorData);
+});
+
+// Solicitar productos al cargar la página
+document.addEventListener('DOMContentLoaded', function() {
+  if (socket.connected) {
+    socket.emit("requestProducts");
+  }
+});
+</script>

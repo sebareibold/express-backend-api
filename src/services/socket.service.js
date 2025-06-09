@@ -55,7 +55,11 @@ class SocketService {
   async sendCurrentProducts(socket) {
     try {
       const productManager = require("../managers/ProductsManager")
-      const products = await productManager.getProducts()
+      const result = await productManager.getProducts(50, 1) // Obtener más productos para tiempo real
+
+      // Extraer solo el array de productos del resultado
+      const products = result.payload || []
+
       socket.emit("productListUpdate", products)
       console.log(`📦 Productos enviados al cliente Id: ${socket.id}`)
     } catch (error) {
@@ -64,11 +68,14 @@ class SocketService {
   }
 
   // Método para emitir actualizaciones de productos
-  emitProductUpdate(products) {
+  emitProductUpdate(result) {
     if (!this.io) {
       console.log("❌ Socket service no inicializado")
       return
     }
+
+    // Extraer solo el array de productos del resultado
+    const products = result.payload || []
 
     this.io.emit("productListUpdate", products)
     console.log(`📡 Actualización de productos emitida a ${this.io.engine.clientsCount} clientes`)

@@ -1,44 +1,24 @@
-const mongoose = require("mongoose");
-const ProductsScheme = require("../models/ProductSchema");
+const mongoose = require("mongoose")
+const ProductsScheme = require("../models/ProductSchema")
 
-const socketService = require("../services/socket.service");
+const socketService = require("../services/socket.service")
 
 class ProductsManager {
   constructor() {}
 
   async init() {
     try {
-      console.log("✅ ProductsManager Inicializado Exitosamente!");
+      console.log("✅ ProductsManager Inicializado Exitosamente!")
     } catch (error) {
-      console.error("❌  Error al leer el archivo de productos:", error.message);
+      console.error("❌  Error al leer el archivo de productos:", error.message)
       //this.products = [] // fallback por si el archivo está vacío o no existe
     }
   }
 
-  async addProduct(
-    title,
-    description,
-    price,
-    category,
-    code,
-    stock,
-    status,
-    thumbnails
-  ) {
-    let newProduct;
-    if (
-      !(
-        !title ||
-        !description ||
-        price == null ||
-        !category ||
-        !code ||
-        stock == null ||
-        !thumbnails ||
-        !status
-      )
-    ) {
-      const existingProduct = await ProductsScheme.findOne({ code: code });
+  async addProduct(title, description, price, category, code, stock, status, thumbnails) {
+    let newProduct
+    if (!(!title || !description || price == null || !category || !code || stock == null || !thumbnails || !status)) {
+      const existingProduct = await ProductsScheme.findOne({ code: code })
 
       if (!existingProduct) {
         const productData = {
@@ -50,57 +30,48 @@ class ProductsManager {
           stock,
           status,
           thumbnails,
-        };
-
-        // Verificar que el codigo no exista ya en la base de datos
-        const existingProduct = await ProductsScheme.findOne({ code: code });
-        if (existingProduct) {
-          throw new Error(`Ya existe un producto con el código: ${code}`);
         }
 
-        const newProduct = new ProductsScheme(productData);
-        const saveProducts = await newProduct.save();
+        // Verificar que el codigo no exista ya en la base de datos
+        const existingProduct = await ProductsScheme.findOne({ code: code })
+        if (existingProduct) {
+          throw new Error(`Ya existe un producto con el código: ${code}`)
+        }
 
-        console.log("Producto añadido:", newProduct);
+        const newProduct = new ProductsScheme(productData)
+        const saveProducts = await newProduct.save()
+
+        console.log("Producto añadido:", newProduct)
 
         // Usar el servicio de socket para emitir la actualización
-        const allProducts = await this.getProducts();
-        socketService.emitProductUpdate(allProducts);
+        const allProducts = await this.getProducts(50, 1) // Obtener productos para WebSocket
+        socketService.emitProductUpdate(allProducts)
 
-        return saveProducts;
+        return saveProducts
       } else {
-        throw new Error("Error: Todos los campos son requeridos");
+        throw new Error("Error: Todos los campos son requeridos")
       }
     } else {
-      console.log("Error: Algun campo no fue dado correctamente");
+      console.log("Error: Algun campo no fue dado correctamente")
     }
-    return newProduct;
+    return newProduct
   }
-  
-  async getProducts(limit, page, sort, query) {
+
+  async getProducts(limit = 10, page = 1, sort, query) {
     try {
-      let skip = page && limit ? (page - 1) * limit : 0;
-      let dbQuery = {};
-      let sortOptions = {};
-      console.log(query);
-      // Construimos dbQuery con campos específicos
+      const dbQuery = {}
+      const sortOptions = {}
+
+      // Construir query de búsqueda
       if (query) {
-        const allowedFields = [
-          "category",
-          "code",
-          "stock",
-          "status",
-          "price",
-          "title",
-          "description",
-        ];
+        const allowedFields = ["category", "code", "stock", "status", "price", "title", "description"]
+
         for (const field of allowedFields) {
           if (query[field] !== undefined) {
-            // Buscar parcial si es string
             if (typeof query[field] === "string") {
-              dbQuery[field] = { $regex: query[field], $options: "i" };
+              dbQuery[field] = { $regex: query[field], $options: "i" }
             } else {
-              dbQuery[field] = query[field];
+              dbQuery[field] = query[field]
             }
           }
         }
@@ -108,27 +79,66 @@ class ProductsManager {
 
       // Procesamiento de ordenamiento
       if (sort) {
-        const [field, order] = sort.split(":");
+        const [field, order] = sort.split(":")
         if (field) {
-          sortOptions[field] = order === "desc" ? -1 : 1;
+          sortOptions[field] = order === "desc" ? -1 : 1
         }
       }
 
-      // Construcción de la consulta
-      let productsQuery = ProductsScheme.find(dbQuery);
+      // Calcular skip para paginación
+      const skip = (page - 1) * limit
+
+      // Obtener total de documentos que coinciden con la query
+      const totalDocs = await ProductsScheme.countDocuments(dbQuery)
+
+      // Calcular información de paginación
+      const totalPages = Math.ceil(totalDocs / limit)
+      const hasPrevPage = page > 1
+      const hasNextPage = page < totalPages
+      const prevPage = hasPrevPage ? page - 1 : null
+      const nextPage = hasNextPage ? page + 1 : null
+
+      // Construir la consulta
+      let productsQuery = ProductsScheme.find(dbQuery)
 
       if (Object.keys(sortOptions).length > 0) {
-        productsQuery = productsQuery.sort(sortOptions);
+        productsQuery = productsQuery.sort(sortOptions)
       }
 
-      if (limit) productsQuery = productsQuery.limit(limit);
-      if (skip) productsQuery = productsQuery.skip(skip);
+      productsQuery = productsQuery.limit(limit).skip(skip)
 
-      const products = await productsQuery.exec();
-      return products;
+      const products = await productsQuery.exec()
+
+      // Retornar objeto con formato requerido
+      return {
+        status: "success",
+        payload: products,
+        totalPages,
+        prevPage,
+        nextPage,
+        page,
+        hasPrevPage,
+        hasNextPage,
+        prevLink: hasPrevPage ? `/api/products?page=${prevPage}&limit=${limit}${sort ? `&sort=${sort}` : ""}` : null,
+        nextLink: hasNextPage ? `/api/products?page=${nextPage}&limit=${limit}${sort ? `&sort=${sort}` : ""}` : null,
+        totalDocs,
+      }
     } catch (error) {
-      console.error("Error al obtener productos:", error.message);
-      throw error;
+      console.error("Error al obtener productos:", error.message)
+      return {
+        status: "error",
+        payload: [],
+        totalPages: 0,
+        prevPage: null,
+        nextPage: null,
+        page: 1,
+        hasPrevPage: false,
+        hasNextPage: false,
+        prevLink: null,
+        nextLink: null,
+        totalDocs: 0,
+        error: error.message,
+      }
     }
   }
 
@@ -136,22 +146,22 @@ class ProductsManager {
     try {
       // Verificar si el ID es un ObjectId válido de MongoDB
       if (!mongoose.Types.ObjectId.isValid(id)) {
-        console.log("Error: ID de producto inválido");
-        return null;
+        console.log("Error: ID de producto inválido")
+        return null
       }
 
-      const specificProduct = await ProductsScheme.findById(id);
+      const specificProduct = await ProductsScheme.findById(id)
 
       if (specificProduct) {
-        console.log("Éxito: Producto encontrado");
+        console.log("Éxito: Producto encontrado")
       } else {
-        console.log("Error: Producto no encontrado");
+        console.log("Error: Producto no encontrado")
       }
 
-      return specificProduct;
+      return specificProduct
     } catch (error) {
-      console.error("Error al buscar producto por ID:", error.message);
-      return null;
+      console.error("Error al buscar producto por ID:", error.message)
+      return null
     }
   }
 
@@ -159,50 +169,37 @@ class ProductsManager {
     try {
       // Verificar si el ID es válido
       if (!mongoose.Types.ObjectId.isValid(id)) {
-        console.log("Error: ID de producto inválido");
-        return 0;
+        console.log("Error: ID de producto inválido")
+        return 0
       }
 
       // Campos permitidos para actualizar
-      const camposPermitidos = [
-        "title",
-        "description",
-        "price",
-        "category",
-        "code",
-        "stock",
-        "status",
-        "thumbnails",
-      ];
+      const camposPermitidos = ["title", "description", "price", "category", "code", "stock", "status", "thumbnails"]
 
       if (!camposPermitidos.includes(campo)) {
-        console.log("Error: Campo no válido para actualización");
-        return 0;
+        console.log("Error: Campo no válido para actualización")
+        return 0
       }
 
-      const updateData = {};
-      updateData[campo] = valor;
+      const updateData = {}
+      updateData[campo] = valor
 
-      const updatedProduct = await ProductsScheme.findByIdAndUpdate(
-        id,
-        updateData,
-        { new: true }
-      );
+      const updatedProduct = await ProductsScheme.findByIdAndUpdate(id, updateData, { new: true })
 
       if (updatedProduct) {
-        console.log("Producto actualizado:", updatedProduct);
-        
+        console.log("Producto actualizado:", updatedProduct)
+
         // Emitir actualización por WebSocket
-        const allProducts = await this.getProducts();
-        socketService.emitProductUpdate(allProducts);
-        return 1;
+        const allProducts = await this.getProducts(50, 1) // Obtener productos para WebSocket
+        socketService.emitProductUpdate(allProducts)
+        return 1
       } else {
-        console.log("Error: Producto no encontrado");
-        return 0;
+        console.log("Error: Producto no encontrado")
+        return 0
       }
     } catch (e) {
-      console.log("Error: Producto no encontrado");
-      return 0;
+      console.log("Error: Producto no encontrado")
+      return 0
     }
   }
 
@@ -210,29 +207,29 @@ class ProductsManager {
     try {
       // Verificar si el ID es válido
       if (!mongoose.Types.ObjectId.isValid(id)) {
-        console.log("Error: ID de producto inválido");
-        return 0;
+        console.log("Error: ID de producto inválido")
+        return 0
       }
 
-      const deletedProduct = await ProductsScheme.findByIdAndDelete(id);
+      const deletedProduct = await ProductsScheme.findByIdAndDelete(id)
       // Verificamos si se elimino o no
       if (deletedProduct) {
-        console.log(`Producto con ID ${id} eliminado.`);
+        console.log(`Producto con ID ${id} eliminado.`)
 
         // Emitir actualización por WebSocket
-        const allProducts = await this.getProducts();
-        socketService.emitProductUpdate(allProducts);
+        const allProducts = await this.getProducts(50, 1) // Obtener productos para WebSocket
+        socketService.emitProductUpdate(allProducts)
 
-        return 1;
+        return 1
       } else {
-        console.log(`Error: Producto con ID ${id} no encontrado`);
-        return 0;
+        console.log(`Error: Producto con ID ${id} no encontrado`)
+        return 0
       }
     } catch (error) {
-      console.error("Error al eliminar producto:", error.message);
+      console.error("Error al eliminar producto:", error.message)
     }
   }
 }
 
-const productsManager = new ProductsManager();
-module.exports = productsManager;
+const productsManager = new ProductsManager()
+module.exports = productsManager
